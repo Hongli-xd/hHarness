@@ -1,0 +1,187 @@
+"""HistRAG CLI - Standalone Historical Research Agent."""
+
+from __future__ import annotations
+
+import asyncio
+from pathlib import Path
+
+import typer
+from rich.console import Console
+from rich.markdown import Markdown
+
+from .integration import create_historical_runtime
+from .lightrag import LightRAGClient
+
+app = typer.Typer(name="histrag", help="HistRAG - Historical Research Agent", add_completion=False)
+console = Console()
+
+DEFAULT_WORKING_DIR = Path.home() / ".histrag" / "rag_storage"
+
+
+@app.command()
+def query(
+    question: str = typer.Argument(..., help="Historical research question"),
+    cwd: Path = typer.Option(".", "--cwd", "-C"),
+    model: str = typer.Option("claude-sonnet-4-20250514", "--model", "-m"),
+    max_turns: int = typer.Option(8, "--max-turns", "-n"),
+) -> None:
+    """Query using the full Agent with tools."""
+    from .agent.events import (
+        AssistantTextDelta,
+        ToolExecutionStarted,
+        ToolExecutionCompleted,
+        AssistantTurnComplete,
+    )
+
+    console.print(f"[bold blue]Question:[/bold blue] {question}")
+    console.print(f"[dim]Model:[/dim] {model} | [dim]Max turns:[/dim] {max_turns}\n")
+
+    async def _run():
+        runtime = create_historical_runtime(
+            cwd=cwd,
+            model=model,
+            max_turns=max_turns,
+            rag_working_dir=DEFAULT_WORKING_DIR,
+        )
+
+        await runtime.rag_client.initialize()
+
+        try:
+            async for event in runtime.engine.submit_message(question):
+                if isinstance(event, AssistantTextDelta):
+                    print(event.text, end="", flush=True)
+                elif isinstance(event, ToolExecutionStarted):
+                    console.print(f"\n[cyan][[TOOL: {event.tool_name}]][/cyan]")
+                elif isinstance(event, ToolExecutionCompleted):
+                    if event.is_error:
+                        console.print(f"[red][[TOOL ERROR: {event.tool_name}]][/red]")
+                    else:
+                        console.print(f"[cyan][[/TOOL: {event.tool_name}]][/cyan]")
+                elif isinstance(event, AssistantTurnComplete):
+                    console.print("\n")
+        finally:
+            await runtime.rag_client.finalize()
+
+    asyncio.run(_run())
+
+
+@app.command()
+def lightrag(
+    question: str = typer.Argument(..., help="Query for LightRAG (direct RAG, no agent)"),
+    working_dir: Path = typer.Option(DEFAULT_WORKING_DIR, "--working-dir", "-d"),
+    mode: str = typer.Option("mix", "--mode"),
+) -> None:
+    """Direct LightRAG query without full agent."""
+    console.print(f"[bold blue]Question:[/bold blue] {question}")
+    console.print(f"[dim]Mode:[/dim] {mode}\n")
+
+    async def _run():
+        async with LightRAGClient(working_dir=working_dir) as client:
+            result = await client.aquery(question, mode=mode)
+            console.print(Markdown(f"**Response:**\n\n{result}"))
+
+    asyncio.run(_run())
+
+
+@app.command()
+def interactive(
+    cwd: Path = typer.Option(".", "--cwd", "-C"),
+    model: str = typer.Option("claude-sonnet-4-20250514", "--model", "-m"),
+) -> None:
+    """Start interactive historical research session."""
+    console.print("[bold blue]HistRAG - Historical Research Agent[/bold blue]")
+    console.print("[dim]Type 'exit' or 'quit' to end, 'clear' to clear history[/dim]\n")
+
+    async def _run():
+        runtime = create_historical_runtime(
+            cwd=cwd, model=model, max_turns=20, rag_working_dir=DEFAULT_WORKING_DIR,
+        )
+
+        await runtime.rag_client.initialize()
+
+        try:
+            message_count = 0
+            while True:
+                try:
+                    question = console.input("[bold green]>[/bold green] ")
+                    if question.lower() in {"exit", "quit", "q"}:
+                        break
+                    if question.lower() == "clear":
+                        runtime.engine.clear()
+                        console.print("[dim]History cleared[/dim]\n")
+                        continue
+                    if not question.strip():
+                        continue
+
+                    message_count += 1
+                    console.print(f"\n[dim]Turn {message_count}...[/dim]\n")
+
+                    from .agent.events import (
+                        AssistantTextDelta,
+                        ToolExecutionStarted,
+                        ToolExecutionCompleted,
+                        AssistantTurnComplete,
+                    )
+
+                    async for event in runtime.engine.submit_message(question):
+                        if isinstance(event, AssistantTextDelta):
+                            print(event.text, end="", flush=True)
+                        elif isinstance(event, ToolExecutionStarted):
+                            console.print(f"\n[cyan][[TOOL: {event.tool_name}]][/cyan]")
+                        elif isinstance(event, ToolExecutionCompleted):
+                            if event.is_error:
+                                console.print(f"[red][[/TOOL ERROR: {event.tool_name}]][/red]")
+                            else:
+                                console.print(f"[cyan][[/TOOL: {event.tool_name}]][/cyan]")
+                        elif isinstance(event, AssistantTurnComplete):
+                            console.print("\n")
+
+                except KeyboardInterrupt:
+                    break
+                except Exception as e:
+                    console.print(f"[red]Error: {e}[/red]")
+
+        finally:
+            await runtime.rag_client.finalize()
+
+    asyncio.run(_run())
+    console.print("\n[blue]Goodbye![/blue]")
+
+
+@app.command()
+def setup(
+    working_dir: Path = typer.Option(DEFAULT_WORKING_DIR, "--working-dir", "-d"),
+) -> None:
+    """Setup HistRAG configuration."""
+    console.print("[bold]Setting up HistRAG...[/bold]\n")
+    working_dir.mkdir(parents=True, exist_ok=True)
+
+    histrag_ohmo = Path(__file__).parent / "ohmo"
+    console.print(f"HistRAG ohmo workspace: {histrag_ohmo}")
+    console.print("\n[bold green]Setup complete![/bold green]")
+    console.print(f"\nLightRAG storage: {working_dir}")
+
+
+@app.command()
+def version_cmd() -> None:
+    """Show HistRAG version."""
+    from . import __version__
+    console.print(f"HistRAG v{__version__}")
+
+
+@app.command()
+def tools() -> None:
+    """List available historical research tools."""
+    console.print("[bold]Historical Research Tools:[/bold]\n")
+    console.print("  kg_query     - Query knowledge graph (entity/relation/fuzzy)")
+    console.print("  rag_query    - Full RAG query with LLM")
+    console.print("  rag_data_query - RAG data only (no LLM)")
+    console.print("  cite         - Citation and source tracing")
+
+
+def main():
+    app()
+
+
+if __name__ == "__main__":
+    main()
