@@ -1,0 +1,66 @@
+# LightRAG 配置文件
+
+working_dir: "./dickens"
+
+# ========== 输入文件 ==========
+input_file: "./input/元和郡县图志.txt"
+
+
+# ========== Query ==========
+query:
+  question: "江南道和剑南道的关系？他们分别什么时候设立的？"
+  top_k: 5
+  chunk_top_k: 5
+  max_entity_tokens: 6000
+  max_relation_tokens: 8000
+  max_total_tokens: 30000
+  enable_rerank: false
+
+# ========== LLM (Anthropic/MiniMax) ==========
+llm:
+  model_func: "anthropic"
+  model_name: "MiniMax-M2.7"
+  api_key: "sk-cp-HT93UTSKgpBYKYbEhTrU2JlSVEFO_6SEXNjQYTYCGZXwhPRCFn9WBt2NEGU9ZIBu7nJqKK3c1oCgBEPH_P7xBM0b9RoedCYi1wq4Q-cUjMYG-gD0NUSH97U"
+  base_url: "https://api.minimaxi.com/anthropic"
+  max_tokens: 50000
+  summary_max_tokens: 50000
+  max_async: 5
+  timeout: 600
+
+# ========== Embedding (Ollama nomic) ==========
+embedding:
+  provider: "ollama"
+  model: "nomic-embed-text"
+  dimension: 768
+  max_token_size: 8192
+  host: "http://localhost:11434"
+
+# ========== Storage ==========
+storage:
+  kv_storage: "JsonKVStorage"
+  vector_storage: "NanoVectorDBStorage"
+  graph_storage: "Neo4JStorage"
+  doc_status_storage: "JsonDocStatusStorage"
+
+# ========== Neo4j ==========
+neo4j:
+  uri: "bolt://localhost:7687"
+  username: "neo4j"
+  password: "00000000"
+
+
+
+# ========== 分块 ==========
+chunking:
+  chunk_token_size: 5000
+  chunk_overlap_token_size: 100
+
+# ========== 缓存 ==========
+cache:
+  enable_llm_cache: true
+  enable_llm_cache_for_entity_extract: true
+
+# ========== 日志 ==========
+logging:
+  level: "INFO"
+  log_dir: "./logs"
