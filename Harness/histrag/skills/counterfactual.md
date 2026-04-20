@@ -1,111 +1,112 @@
 ---
 name: counterfactual
-description: Counterfactual analysis for exploring 'what if' scenarios in history
+description: 反事实分析——探索历史上"如果……会怎样"情境的方法
 version: 1.0.0
 ---
 
 # 反事实分析 (Counterfactual Analysis)
 
-## When to Use
+## 适用场景
 
-Use counterfactual analysis when:
-- Exploring the contingency of historical outcomes
-- Testing causal claims ("if X had not happened, Y would not have occurred")
-- Understanding the importance of key events or individuals
-- Identifying necessary vs. sufficient conditions
+在以下情况下使用反事实分析：
+- 探索历史结果的偶然性
+- 检验因果主张（"如果没有发生 X，Y 也不会发生"）
+- 理解关键事件或人物的重要性
+- 区分必要条件与充分条件
 
-## Core Principles
+## 核心原则
 
-1. **逻辑一致性 (Logical Consistency)**: The counterfactual scenario must be plausible
-2. **最小干预 (Minimality)**: Change as little as necessary
-3. **机制导向 (Mechanism-Oriented)**: Focus on causal mechanisms, not just outcomes
-4. **概率思维 (Probabilistic Thinking)**: Consider multiple possible outcomes
+1. **逻辑一致性 (Logical Consistency)**：反事实情境必须合理可行
+2. **最小干预 (Minimality)**：只改变最必要的部分
+3. **机制导向 (Mechanism-Oriented)**：聚焦因果机制，而非仅看结果
+4. **概率思维 (Probabilistic Thinking)**：考虑多种可能结果
 
-## Workflow
+## 工作流程
 
-### 1. Formulate the Counterfactual
-
-```
-IF [specific event/condition] HAD NOT OCCURRED,
-THEN [outcome] WOULD NOT HAVE HAPPENBECAUSE [causal mechanism]
-```
-
-### 2. Assess Plausibility
+### 1. 建构反事实命题
 
 ```
-A. Is the counterfactual logically possible?
-B. Is there historical precedent for the alternative path?
-C. Are the causal mechanisms well-established?
-D. What would need to be different for the counterfactual to hold?
+如果 [具体事件/条件] 没有发生，
+那么 [结果] 也不会发生，
+因为 [因果机制]
 ```
 
-### 3. Trace Implications
+### 2. 评估可行性
 
 ```
-Follow the counterfactual scenario through:
-- Immediate consequences
-- Secondary effects
-- Long-term developments
+A. 该反事实在逻辑上可能吗？
+B. 该替代路径是否有历史先例？
+C. 因果机制是否已被充分证实？
+D. 需要什么条件才能使该反事实成立？
 ```
 
-### 4. Evaluate Significance
+### 3. 追溯影响
 
 ```
-A. How dependent was the outcome on this factor?
-B. Were there other paths that could have led to similar outcomes?
-C. What does this tell us about historical causation?
+沿反事实情境追溯：
+- 直接影响
+- 间接效应
+- 长期发展
 ```
 
-## Example Application
-
-Counterfactual: If the Qin had not unified China in 221 BCE...
+### 4. 评估意义
 
 ```
-Minimal counterfactual: Assume Qin still fell in 207 BCE, but China
-                       remained divided into the original warring states
-
-Immediate:
-- No unified度量衡, 文字, 货币
-- Continued warfare between states
-
-Mechanism:
-- Economic integration from Qin standardization would not occur
-- Centralized bureaucratic governance would not develop
-
-Alternative paths:
-- Another state might eventually unify (Chu? Qi?)
-- Regional identities might remain stronger
-
-Significance:
-- Suggests unification was not inevitable
-- Suggests specific Qin institutions enabled later Chinese state development
+A. 该结果在多大程度上依赖于此因素？
+B. 是否存在其他能导致相似结果的路径？
+C. 这对我们理解历史因果有何启示？
 ```
 
-## Types of Counterfactuals
+## 应用示例
 
-### 1. Individual Agency
-"What if [person] had not acted?"
+反事实：如果秦朝没有在公元前221年统一中国……
 
-### 2. Structural
-"What if [structural condition] had been different?"
+```
+最小反事实：假设秦仍在公元前207年灭亡，但中国保持分裂，
+           回到原来的战国状态
 
-### 3. Contingency
-"What if [contingent event] had not occurred?"
+直接影响：
+- 无统一的度量衡、文字、货币
+- 各国间持续战争
 
-### 4. Remote
-"What if [dramatic change] had happened?"
+因果机制：
+- 秦标准化带来的经济一体化不会发生
+- 中央集权的官僚制度不会建立
 
-## Cautions and Criticisms
+替代路径：
+- 另一国可能最终完成统一（楚？齐？）
+- 地域认同可能更为强固
 
-1. **不可证伪**: Counterfactuals are difficult to test empirically
-2. **过度猜测**: Risk of speculation without evidence
-3. **Presentism**: Risk of imposing modern assumptions on past
-4. **Selectivity**: Can be used to support predetermined conclusions
+意义：
+- 表明统一并非必然
+- 表明是秦的具体制度使后世中国国家发展成为可能
+```
 
-## Defensive Counterfactual Writing
+## 反事实的类型
 
-When presenting counterfactuals, always:
-1. Acknowledge the speculative nature
-2. State the causal mechanisms explicitly
-3. Note alternative possibilities
-4. Connect to substantive historical debates
+### 1. 个体能动性
+"如果 [某人] 没有那样做，会怎样？"
+
+### 2. 结构性
+"如果 [结构性条件] 不同，会怎样？"
+
+### 3. 偶然性
+"如果 [偶然事件] 没有发生，会怎样？"
+
+### 4. 远距反事实
+"如果 [剧烈变化] 发生了，会怎样？"
+
+## 局限与批评
+
+1. **不可证伪**：反事实难以通过实证检验
+2. **过度猜测**：存在无证据猜测的风险
+3. **时代错位**：存在以现代假设强加于过去的风险
+4. **选择性偏差**：可能被用来支持预设结论
+
+## 防御性反事实写作规范
+
+呈现反事实时，始终做到：
+1. 承认其推测性质
+2. 明确阐述因果机制
+3. 指出替代可能性
+4. 与实质性的历史争论相联系

@@ -1,98 +1,98 @@
 ---
 name: comparison
-description: Comparative method for analyzing historical cases across regions, periods, or societies
+description: 比较法——跨地区、跨时期、跨社会分析历史案例的方法
 version: 1.0.0
 ---
 
 # 比较法 (Comparative Method)
 
-## When to Use
+## 适用场景
 
-Use the comparative method when:
-- Comparing historical phenomena across different societies
-- Analyzing similarities and differences between cases
-- Seeking to identify patterns or unique developments
-- Testing hypotheses about historical causation
+在以下情况下使用比较法：
+- 比较不同社会的历史现象
+- 分析案例之间的异同
+- 试图识别模式或独特发展
+- 检验关于历史因果的假设
 
-## Core Principles
+## 核心原则
 
-1. **可比性 (Comparability)**: Ensure cases are genuinely comparable
-2. **对等性 (Equivalence)**: Use equivalent categories and time periods
-3. **系统性 (Systematicity)**: Compare systematically, not selectively
-4. **语境化 (Contextualization)**: Explain differences within their contexts
+1. **可比性 (Comparability)**：确保案例真正可比
+2. **对等性 (Equivalence)**：使用对等的类别和时间段
+3. **系统性 (Systematicity)**：系统地比较，而非选择性比较
+4. **语境化 (Contextualization)**：在语境中解释差异
 
-## Workflow
+## 工作流程
 
-### 1. Define the Comparison
-
-```
-A. Select cases to compare
-B. Define the dimensions of comparison
-C. Establish the time period
-D. State the question driving the comparison
-```
-
-### 2. Gather Evidence
+### 1. 界定比较范围
 
 ```
-For each case:
-- Background conditions
-- Key actors/events
-- Processes/mechanisms
-- Outcomes
+A. 选择要比较的案例
+B. 确定比较的维度
+C. 设定时间段
+D. 阐明驱动比较的问题
 ```
 
-### 3. Systematic Comparison
-
-| Dimension | Case A | Case B | Similarities | Differences |
-|-----------|--------|--------|--------------|-------------|
-| Political | ... | ... | ... | ... |
-| Economic | ... | ... | ... | ... |
-| Social | ... | ... | ... | ... |
-| Cultural | ... | ... | ... | ... |
-
-### 4. Interpret Results
-
-- What explains the similarities?
-- What explains the differences?
-- Do the patterns support or challenge existing theories?
-
-## Example Application
-
-Comparing Chinese and Roman imperial collapse:
+### 2. 收集证据
 
 ```
-Question: Why did both Han and Roman empires face similar internal pressures?
-
-Similarities:
-- Land concentration
-- Peasant immiseration
-- Barbarian pressure on frontiers
-- Military overextension
-
-Differences:
-- China: Re-unified sooner (Sui/Tang)
-- Rome: Longer division (Byzantine West split)
-
-Possible explanations:
-- Geographic factors (steppe geography)
-- Confucian vs. Roman ideological frameworks
-- Bureaucratic vs. senatorial governance structures
+对每个案例：
+- 背景条件
+- 关键行为者/事件
+- 过程/机制
+- 结果
 ```
 
-## Key Considerations
+### 3. 系统比较
 
-### Selection Bias
-Be careful not to select cases that support a predetermined conclusion.
+| 维度 | 案例A | 案例B | 相似点 | 差异点 |
+|------|-------|-------|--------|--------|
+| 政治 | ... | ... | ... | ... |
+| 经济 | ... | ... | ... | ... |
+| 社会 | ... | ... | ... | ... |
+| 文化 | ... | ... | ... | ... |
 
-### False Equivalence
-Ensure categories are truly equivalent across cases.
+### 4. 解释结果
 
-### Complexity
-Real cases are complex; resist simplifying too much.
+- 如何解释相似点？
+- 如何解释差异点？
+- 模式是否支持或挑战现有理论？
 
-## Limitations
+## 应用示例
 
-1. Comparisons can obscure unique features of individual cases
-2. "Most similar systems" design has inherent limitations
-3. Cross-cultural comparison risks imposing Western categories
+比较汉帝国与罗马帝国的崩溃：
+
+```
+问题：为何汉与罗马帝国都面临相似的内部压力？
+
+相似点：
+- 土地集中
+- 农民贫困化
+- 蛮族在边疆的压力
+- 军事过度扩张
+
+差异点：
+- 中国：更早重新统一（隋/唐）
+- 罗马：更长时间的分立（拜占庭/西罗马分裂）
+
+可能解释：
+- 地理因素（草原地理）
+- 儒家与罗马意识形态框架的差异
+- 官僚制与元老院制治理结构的差异
+```
+
+## 关键注意事项
+
+### 选择偏差
+注意不要选择支持预设结论的案例。
+
+### 虚假对等
+确保跨案例的类别真正对等。
+
+### 复杂性
+真实案例是复杂的；避免过度简化。
+
+## 局限性
+
+1. 比较可能掩盖个别案例的独特特征
+2. "最相似体系"设计有固有局限
+3. 跨文化比较有将西方范畴强加于人的风险

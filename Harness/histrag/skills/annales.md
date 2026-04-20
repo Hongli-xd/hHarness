@@ -1,127 +1,126 @@
 ---
 name: annales
-description: Annales School methodology for long-term structural analysis in history
+description: 年鉴学派——用于长时段结构分析的历史学方法论
 version: 1.0.0
 ---
 
 # 年鉴学派 (Annales School / Annales Methodology)
 
-## When to Use
+## 适用场景
 
-Use Annales methodology when:
-- Analyzing long-term structures over short-term events
-- Examining the intersection of geography, economy, society, and culture
-- Moving beyond "great man" history to structural explanations
-- Understanding how deep historical currents shape events
+在以下情况下使用年鉴学派方法：
+- 分析超越短时事件的长期结构
+- 考察地理、经济、社会与文化的交叉影响
+- 超越"伟人史观"，寻求结构性解释
+- 理解深层历史潮流如何塑造事件
 
-## Core Principles
+## 核心原则
 
-1. **长时段 (Longue Durée)**: Historical time operates on multiple scales
-   - **事件史** (Event history / histoire événementielle): Short-term, political
-   - **局势史** (History of situations / histoire événementielle): Medium-term cycles
-   - **结构史** (Structural history): Long-term, deep structures
+1. **长时段 (Longue Durée)**：历史时间在多重尺度上运行
+   - **事件史** (histoire événementielle)：短时段、政治性
+   - **局势史** (conjuncture)：中时段周期性
+   - **结构史**：长时段、深层结构
 
-2. **整体史 (Total History)**: History should encompass all human activities
-   - Political, economic, social, cultural, geographic, demographic
-   - No dimension is more "real" than another
+2. **整体史 (Total History)**：历史应涵盖全部人类活动
+   - 政治、经济、社会、文化、地理、人口
+   - 没有哪个维度比其他维度更"真实"
 
-3. **问题史 (History-Problem)**: History is driven by questions, not chronology
-   - Start with a problem, not a period
-   - Use multiple sources across disciplines
+3. **问题史 (History-Problem)**：历史由问题驱动，而非编年
+   - 从问题出发，而非从时期出发
+   - 跨学科使用多种资料
 
-4. **跨学科 (Interdisciplinary)**: Draw on geography, economics, sociology, anthropology
+4. **跨学科 (Interdisciplinary)**：借鉴地理学、经济学、社会学、人类学
 
-## Key Concepts
+## 关键概念
 
-### La longue durée (Long Duration)
+### 长时段 (La longue durée)
 
-The deepest layer of history — structures that change only over centuries:
-- Geographic frameworks
-- Demographic patterns
-- Economic systems
-- Cultural structures (mentalités)
+历史最深层——数百年才变化的结构：
+- 地理框架
+- 人口模式
+- 经济体系
+- 文化结构（心态史/modalités）
 
-### Structure
+### 结构 (Structure)
 
-Recurring patterns that persist over long periods:
-- Social structures
-- Economic structures
-- Mental structures (mentalités)
+长期持续存在的反复出现模式：
+- 社会结构
+- 经济结构
+- 心态结构（mentalités）
 
-### Conjuncture
+### 局势 (Conjuncture)
 
-Medium-term cycles and situations (10-50 years):
-- Economic cycles
-- Political configurations
-- Social movements
+中时段周期与局势（10-50年）：
+- 经济周期
+- 政治格局
+- 社会运动
 
-### Event
+### 事件 (Event)
 
-Short-term happening (days to years):
-- Battles, treaties, elections
-- The traditional stuff of political history
+短时段事件（数天至数年）：
+- 战争、条约、选举
+- 传统政治史的主要内容
 
-## Example Application
+## 应用示例
 
-Studying the Taiping Rebellion (1850-1864) from Annales perspective:
+从年鉴学派视角研究太平天国（1850-1864）：
 
 ```
-Longue durée (centuries):
-- Geographic: Yangzi River basin geography
-- Demographic: Population growth since 1700
-- Economic: Land pressure, silver economy
-- Social: Hakka-Puntí ethnic tensions
+长时段（数百年）：
+- 地理：长江流域地理
+- 人口：1700年以来的人口增长
+- 经济：土地压力，银本位经济
+- 社会：客家-本地人（鹤佬）族群紧张
 
-Conjuncture (decades):
-- Opium trade imbalance
-- Qing administrative decay
-- Climate crisis (1850s drought)
+局势（数十年）：
+- 鸦片贸易逆差
+- 清朝行政腐败
+- 气候危机（1850年代干旱）
 
-Event (1850-1864):
-- Taiping Rebellion itself
-- Military response
-- Regional impacts
+事件（1850-1864）：
+- 太平天国本身
+- 军事反应
+- 区域影响
 
-Question: Why did this particular conjuncture produce this event
-in this geographic context?
+问题：为何这个特定局势在这个地理背景下产生了这个事件？
 ```
 
-## The Three Levels of Historical Time
+## 历史时间的三个层次
 
 ```
 ┌─────────────────────────────────────────────────┐
-│  LONGUE DURÉE (地理, 人口结构, 文化深层)          │
+│  长时段（地理, 人口结构, 文化深层）               │
 │  百年至千年尺度                                  │
 ├─────────────────────────────────────────────────┤
-│  CONJONCTURE (经济周期, 社会运动, 政治局势)        │
+│  局势（经济周期, 社会运动, 政治格局）              │
 │  10-50年尺度                                    │
 ├─────────────────────────────────────────────────┤
-│  EVENT (事件, 人物, 战役)                        │
+│  事件（事件, 人物, 战役）                        │
 │  天至年尺度                                      │
 └─────────────────────────────────────────────────┘
 ```
 
-## Methodological Implications
+## 方法论启示
 
-### For Research Questions
-- Ask "why this here and now" rather than just "what happened when"
-- Consider what long-term structures made this moment possible
+### 对研究问题
+- 问"为何在此地此时发生"而非仅"何时发生何事"
+- 思考是哪些长时段结构使这一时刻成为可能
 
-### For Source Analysis
-- Look beyond political documents to:
-  - Economic data (tax records, trade figures)
-  - Demographic sources (censuses, household registers)
-  - Geographic descriptions
-  - Cultural artifacts
+### 对史料分析
+- 超越政治文献，关注：
+  - 经济数据（税收记录、贸易数字）
+  - 人口史料（户籍、人口普查）
+  - 地理描述
+  - 文化遗产
 
-### For Narrative
-- Balance event narration with structural explanation
-- Show how long-term currents shaped short-term events
-- Avoid reducing history to great men
+### 对叙事
+- 在事件叙事与结构解释之间保持平衡
+- 展示长时段潮流如何塑造短时段事件
+- 避免将历史简化为伟人史
 
-## Cautions
+## 注意事项
 
-1. **不要忽视事件**: Annales was sometimes too dismissive of political history
-2. **避免地理决定论**: Longue durée is not geographic determinism
-3. **人类能动性**: Structures shape but do not determine human action
-4. **史料局限**: Longue durée requires different sources than political history
+1. **不要忽视事件**：年鉴学派有时过度贬低政治史
+2. **避免地理决定论**：长时段不等于地理决定论
+3. **人类能动性**：结构塑造但不决定人类行为
+4. **史料局限**：长时段分析需要不同于政治史的史料

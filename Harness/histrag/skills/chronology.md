@@ -1,79 +1,79 @@
 ---
 name: chronology
-description: Chronological method for organizing and analyzing historical events in temporal sequence
+description: 编年法——用于按时间顺序组织和分析历史事件的方法
 version: 1.0.0
 ---
 
 # 编年法 (Chronological Method)
 
-## When to Use
+## 适用场景
 
-Use the chronological method when:
-- The user asks about "when" something happened
-- You need to establish temporal sequence for causality analysis
-- Comparing events across different periods or regions
-- Writing historical narratives that require clear time markers
+在以下情况下使用编年法：
+- 用户询问某事"何时"发生
+- 需要建立时间序列以进行因果分析
+- 比较不同地区或时期的事件
+- 撰写需要清晰时间标记的历史叙事
 
-## Core Principles
+## 核心原则
 
-1. **时间顺序 (Temporal Order)**: Arrange events in the sequence they occurred
-2. **年代学 (Chronology)**: Establish absolute and relative dates
-3. **分期 (Periodization)**: Divide history into meaningful periods
-4. **同步 (Synchronism)**: Note contemporaneous events across regions
+1. **时间顺序 (Temporal Order)**：按事件发生顺序排列
+2. **年代学 (Chronology)**：确定绝对年代与相对年代
+3. **分期 (Periodization)**：将历史划分为有意义的时期
+4. **同步 (Synchronism)**：注意跨地区的同期事件
 
-## Workflow
+## 工作流程
 
-### 1. Establish the Timeline
-
-```
-1. Identify all relevant events
-2. Determine dates (year, month, day if available)
-3. Note the dating system used (帝王纪年, 公元纪年, etc.)
-4. Mark uncertain dates clearly
-```
-
-### 2. Analyze Temporal Relationships
-
-- **先行后续** (Antecedent-Consequent): What happened before/after?
-- **同时性** (Simultaneity): What else was happening at the same time?
-- **间隔** (Interval): How much time between events?
-
-### 3. Periodization
-
-Divide the narrative into meaningful periods:
-- 断代 (Periodization by dynasty or era)
-- 阶段 (Stages within a longer period)
-- 转折点 (Turning points)
-
-## Example Application
-
-For a query about the fall of the Han dynasty:
+### 1. 建立时间线
 
 ```
-Timeline:
-- 184 CE: Yellow Turban Rebellion (黄巾之乱)
-- 189 CE: Dong Zhuo enters capital
-- 190 CE: Campaign against Dong Zhuo
-- 196 CE: Cao Cao moves to Xu
-- 200 CE: Battle of Guandu (官渡之战)
-- 208 CE: Battle of Red Cliffs (赤壁之战)
-- 220 CE: End of Han / Three Kingdoms begin
-
-Periodization:
-- Late Han Crisis (184-220)
-  - Dong Zhuo Era (189-192)
-  - Three Lords Contest (192-220)
+1. 识别所有相关事件
+2. 确定日期（年、月、日，如有）
+3. 注明所用的纪年体系（帝王纪年、公元纪年等）
+4. 明确标注不确定的日期
 ```
 
-## Key Commands
+### 2. 分析时间关系
 
-Use these tools with chronological analysis:
-- `kg_query` with time-related entity searches
-- `rag_query` for specific dates and periods
-- Note periodization in citations
+- **先行后续** (Antecedent-Consequent)：什么之前/之后发生？
+- **同时性** (Simultaneity)：同一时间还有什么事件？
+- **间隔** (Interval)：事件之间间隔多久？
 
-## Cautions
+### 3. 历史分期
 
-1. **Avoid anachronism**: Don't assume modern calendar precision for ancient events
-2. **Dating uncertainty**: Ancient Chinese dates are often disputed
-3. **Simultaneity is not causation**: Just because events occurred at the same time doesn't mean one caused the other
+将叙事划分为有意义的时期：
+- 断代（按朝代或时代分期）
+- 阶段（较长时期内的阶段）
+- 转折点（Turning points）
+
+## 应用示例
+
+研究汉朝灭亡：
+
+```
+时间线：
+- 184年：黄巾之乱
+- 189年：董卓入京
+- 190年：讨董联军
+- 196年：曹操移驾许都
+- 200年：官渡之战
+- 208年：赤壁之战
+- 220年：汉亡，三国开始
+
+分期：
+- 汉末危机（184-220）
+  - 董卓时期（189-192）
+  - 三雄角逐（192-220）
+```
+
+## 关键工具
+
+在编年分析中使用以下工具：
+- 使用 `kg_query` 进行时间相关实体检索
+- 使用 `rag_query` 检索具体日期和时期
+- 在引用中注明分期
+
+## 注意事项
+
+1. **避免时代错位**：不要对古代事件假设现代日历的精确性
+2. **年代不确定**：中国古代日期常有争议
+3. **同时性不等于因果性**：事件同时发生并不意味着一个导致另一个

@@ -1,93 +1,93 @@
-# Source Credibility Guide
+# 史料可信度指南
 
-## Credibility Classification System
+## 可信度分类体系
 
-This guide defines the credibility levels used to annotate historical claims in research.
+本指南定义了历史主张可信度等级，用于标注研究中的历史主张。
 
-### 一手文献 (Primary Sources)
+## 一手文献
 
-**Definition**: Sources created at the time of the events described, by participants or witnesses.
+**定义**：由事件的亲历者或见证者在事件发生当时创建的史料。
 
-**Characteristics**:
-- Contemporary to the events
-- Created by people with direct knowledge
-- May have biases of the time and author
+**特征**：
+- 与事件同时代
+- 由具有直接了解的人创建
+- 可能带有时代和作者的偏见
 
-**Examples**:
-- 史书 (Historiographical works): 《史记》《汉书》《资治通鉴》
-- 档案 (Archival documents): 政府文书, 契约, 奏章
-- 金石 (Inscriptions): 碑刻, 青铜器铭文
-- 考古 (Archaeological): 出土文物, 遗址
+**示例**：
+- 史书（ historiographical works）：《史记》《汉书》《资治通鉴》
+- 档案（archival documents）：政府文书、契约、奏章
+- 金石（inscriptions）：碑刻、青铜器铭文
+- 考古（archaeological）：出土文物、遗址
 
-**Tag**: [一手文献]
+**标签**：[一手文献]
 
-### 二手研究 (Secondary Sources)
+## 二手研究
 
-**Definition**: Later scholarship that analyzes, interprets, or builds upon primary sources.
+**定义**：对一手文献进行分析、解释或以之构建的后世学术著作。
 
-**Characteristics**:
-- Created after the events
-- May draw on multiple primary sources
-- Represents scholarly interpretation
+**特征**：
+- 在事件发生之后创作
+- 可能综合多份一手文献
+- 代表学术性解读
 
-**Examples**:
-- 学术专著 (Academic monographs)
-- 期刊论文 (Journal articles)
-- 教科书 (Textbooks)
-- 编年史整理 (Compiled chronologies)
+**示例**：
+- 学术专著（academic monographs）
+- 期刊论文（journal articles）
+- 教科书（textbooks）
+- 编年史整理（compiled chronologies）
 
-**Tag**: [二手研究]
+**标签**：[二手研究]
 
-### 争议性说法 (Disputed Claims)
+## 争议性说法
 
-**Definition**: Historical claims where scholars disagree on the facts or interpretations.
+**定义**：学者在事实或解释上存在分歧的历史主张。
 
-**Characteristics**:
-- Multiple competing interpretations exist
-- Evidence is ambiguous or contradictory
-- Active scholarly debate continues
+**特征**：
+- 存在多种相互竞争的解读
+- 证据模糊或矛盾
+- 学术争论持续进行
 
-**Examples**:
+**示例**：
 - 秦始皇焚书坑儒的具体规模
 - 安史之乱的经济根源
 - 明清资本主义萌芽问题
 
-**Tag**: [争议性说法]
+**标签**：[争议性说法]
 
-**Note**: When encountering disputed claims, always present the main competing interpretations and their key evidence.
+**注意**：遇到争议性说法时，必须呈现主要竞争性解读及其关键证据。
 
-## Annotation Guidelines
+## 标注指南
 
-### When to Annotate
+### 何时标注
 
-1. **Every factual claim** should be traceable to a source
-2. **Interpretation** should be labeled as such
-3. **Disputed claims** must be explicitly labeled as disputed
+1. **每个事实主张**都应能追溯到某一来源
+2. **解读**应明确标注为解读
+3. **争议性说法**必须明确标注为有争议
 
-### How to Annotate
+### 如何标注
 
-Use the `cite` tool to:
+使用 `cite` 工具：
 ```
-claim: [the historical claim]
+claim: [历史主张]
 credibility: [primary/secondary/disputed]
-source_entities: [relevant sources]
-notes: [any additional context]
+source_entities: [相关来源]
+notes: [任何额外说明]
 ```
 
-### Credibility in Narrative
+### 叙事中的可信度呈现
 
-When generating historical narrative, use inline tags:
+生成历史叙事时，使用行内标签：
 
 ```
-According to Sima Qian's Records of the Grand Historian [一手文献][KG:entity_史记],
-the battle occurred in 208 BCE...
+据司马迁《史记》[一手文献][KG:entity_史记]记载，
+该战役发生于公元前208年……
 ```
 
-## Quality Checks
+## 质量核查
 
-Before presenting any historical claim:
+呈现任何历史主张前：
 
-1. ✅ Is the source primary or secondary?
-2. ✅ Is the claim supported by multiple sources?
-3. ✅ Is this a contested interpretation?
-4. ✅ Have I cited the source explicitly?
+1. ✅ 来源是一手还是二手？
+2. ✅ 主张是否有多来源支撑？
+3. ✅ 这是否是争议性解读？
+4. ✅ 是否已明确引用来源？
