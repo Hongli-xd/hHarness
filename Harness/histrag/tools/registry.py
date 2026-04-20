@@ -14,6 +14,8 @@ if TYPE_CHECKING:
 from .cite_tool import CiteTool
 from .kg_query_tool import KGQueryTool
 from .rag_query_tool import RAGDataQueryTool, RAGQueryTool
+from .timeline_tool import TimelineTool
+from .map_location_tool import MapLocationTool
 
 
 def create_historical_tool_registry(
@@ -47,6 +49,10 @@ def create_historical_tool_registry(
     # Secondary research tools
     registry.register(RAGQueryTool(rag_client))
     registry.register(RAGDataQueryTool(rag_client))
+
+    # Visualization tools
+    registry.register(TimelineTool())
+    registry.register(MapLocationTool())
 
     return registry
 

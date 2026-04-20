@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>明朝地理全图</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #f5f3ee; }
+
+#app { display: flex; flex-direction: column; height: 100vh; }
+
+#toolbar {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  padding: 8px 12px; background: #fff;
+  border-bottom: 1px solid #e0d8c8;
+}
+#toolbar h1 { font-size: 14px; font-weight: 600; color: #333; margin-right: 4px; }
+.sep { width: 1px; height: 18px; background: #ddd; }
+
+.tb {
+  font-size: 11px; padding: 3px 12px; border-radius: 20px;
+  border: 1px solid #ccc; background: transparent; color: #666;
+  cursor: pointer; transition: all .15s;
+}
+.tb:hover { border-color: #999; color: #333; }
+.tb.on { background: #085041; color: #fff; border-color: #085041; }
+.tb.layer-on { background: #e8f4f0; color: #085041; border-color: #5DCAA5; }
+
+#status { font-size: 11px; color: #999; }
+#zoom-hint { font-size: 11px; color: #bbb; margin-left: auto; }
+
+#map-wrap { flex: 1; position: relative; overflow: hidden; }
+#map-svg { display: block; width: 100%; height: 100%; cursor: grab; }
+#map-svg.dragging { cursor: grabbing; }
+
+#tooltip {
+  position: absolute; pointer-events: none;
+  background: rgba(255,255,255,0.96); border: 1px solid #ccc;
+  border-radius: 6px; padding: 6px 10px;
+  font-size: 12px; display: none; max-width: 220px;
+  line-height: 1.6; z-index: 10; box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+}
+#tooltip strong { font-size: 13px; color: #222; display: block; margin-bottom: 2px; }
+
+#legend {
+  position: absolute; bottom: 12px; left: 12px;
+  background: rgba(255,255,255,0.9); border: 1px solid #ddd;
+  border-radius: 6px; padding: 8px 12px; font-size: 11px; color: #555;
+  line-height: 2;
+}
+.leg-row { display: flex; align-items: center; gap: 6px; }
+.leg-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.leg-line { width: 16px; height: 2px; flex-shrink: 0; }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="toolbar">
+    <h1>明朝地理全图</h1>
+    <div class="sep"></div>
+    <button class="tb on"    onclick="setTheme('natural',this)">自然</button>
+    <button class="tb"       onclick="setTheme('parchment',this)">羊皮纸</button>
+    <button class="tb"       onclick="setTheme('dark',this)">暗色</button>
+    <div class="sep"></div>
+    <button class="tb layer-on" id="btn-river" onclick="toggleLayer('river',this)">河流</button>
+    <button class="tb layer-on" id="btn-lake"  onclick="toggleLayer('lake',this)">湖泊</button>
+    <button class="tb layer-on" id="btn-mtn"   onclick="toggleLayer('mtn',this)">山脉</button>
+    <button class="tb layer-on" id="btn-city"  onclick="toggleLayer('city',this)">城市</button>
+    <span id="status">加载中…</span>
+    <span id="zoom-hint">滚轮缩放 · 拖动平移 · 悬停查看信息</span>
+  </div>
+  <div id="map-wrap">
+    <svg id="map-svg"></svg>
+    <div id="tooltip"></div>
+    <div id="legend">
+      <div class="leg-row"><div class="leg-dot" style="background:#cc3300"></div> 首都 / 直辖市</div>
+      <div class="leg-row"><div class="leg-dot" style="background:#2255aa"></div> 省会 / 首府</div>
+      <div class="leg-row"><div class="leg-dot" style="background:#667755"></div> 历史城市</div>
+      <div class="leg-row"><div class="leg-line" style="background:#5599cc"></div> 河流</div>
+    </div>
+  </div>
+</div>
+
+<script src="/Harness/histrag/resources/lib/d3.min.js"></script>
+<script src="/Harness/histrag/resources/lib/topojson.min.js"></script>
+<script>
+// ─── 主题配置 ────────────────────────────────────────────────
+const THEMES = {
+  natural: {
+    sphere:'#b8d8ea', land:'#e8dfc0', border:'#a09060', grid:'#aaccdd',
+    river:'#5599cc', lake:'#7ab8d4', lakeStroke:'#4488aa',
+    mtnFill:'#c8b898', mtnStroke:'#a08868',
+    cap:'#cc3300', prov:'#223388', hist:'#667755',
+    region:'#445533', mtn:'#776655', sea:'#336688',
+  },
+  parchment: {
+    sphere:'#c4b070', land:'#f0e4b4', border:'#806030', grid:'#a08040',
+    river:'#7799aa', lake:'#8899aa', lakeStroke:'#667788',
+    mtnFill:'#c8b070', mtnStroke:'#906030',
+    cap:'#801000', prov:'#1a2860', hist:'#3a5020',
+    region:'#3a4010', mtn:'#604020', sea:'#5a4010',
+  },
+  dark: {
+    sphere:'#0d1a2a', land:'#252e3c', border:'#3a4a5a', grid:'#162030',
+    river:'#2a6a9a', lake:'#1a4a6a', lakeStroke:'#2a6a8a',
+    mtnFill:'#1e2a38', mtnStroke:'#3a4a58',
+    cap:'#ff9966', prov:'#66aadd', hist:'#88aa77',
+    region:'#88aa66', mtn:'#aa9977', sea:'#4499bb',
+  },
+};
+let T = THEMES.natural;
+
+// ─── 山脉数据 ─────────────────────────────────────────────────
+const MOUNTAINS = [
+  {name:'喜马拉雅山', pts:[[72,28],[78,28],[82,28],[86,28],[88,27],[92,27],[96,27],[96,28],[92,29],[88,29],[84,29],[80,29],[76,29],[72,29]]},
+  {name:'天山',       pts:[[68,40],[72,41],[76,42],[80,43],[84,43],[88,43],[92,42],[88,42],[84,42],[80,42],[76,41],[72,40]]},
+  {name:'昆仑山',     pts:[[74,36],[78,36],[82,36],[86,36],[90,36],[94,36],[98,35],[94,35],[90,35],[86,35],[82,35],[78,35],[74,35]]},
+  {name:'祁连山',     pts:[[94,38],[97,38],[100,38],[103,37],[100,37],[97,37],[94,37]]},
+  {name:'秦岭',       pts:[[104,33],[107,34],[110,34],[113,33],[110,33],[107,33],[104,33]]},
+  {name:'阿尔泰山',   pts:[[84,47],[87,48],[90,49],[93,49],[90,48],[87,47],[84,47]]},
+  {name:'大兴安岭',   pts:[[118,48],[120,50],[122,52],[124,52],[122,50],[120,48],[118,47]]},
+  {name:'横断山脉',   pts:[[96,22],[98,24],[100,26],[102,28],[100,27],[98,25],[96,23]]},
+  {name:'帕米尔高原', pts:[[70,36],[73,37],[76,38],[76,37],[73,36],[70,35]]},
+  {name:'乌拉尔山',   pts:[[58,50],[59,52],[60,54],[60,56],[59,55],[58,53],[58,51]]},
+];
+
+// ─── 城市 / 地名数据 ──────────────────────────────────────────
+// t: cap=直辖市/首都, prov=省会, hist=历史城市, region=地区, sea=海域/水体
+// mz: 最小显示缩放级别 (1=始终显示, 2=1.8x以上, 3=3.5x以上)
+const PLACES = [{"n": "北京", "lo": 116.4, "la": 39.9, "t": "cap", "mz": 1, "i": "明朝首都"}, {"n": "南京", "lo": 118.8, "la": 32.1, "t": "hist", "mz": 1, "i": "明朝初期首都"}, {"n": "西安", "lo": 108.9, "la": 34.3, "t": "hist", "mz": 1, "i": "古长安"}, {"n": "沈阳", "lo": 123.4, "la": 41.8, "t": "hist", "mz": 1, "i": "后金/清初期首都"}, {"n": "扬州", "lo": 119.4, "la": 32.4, "t": "hist", "mz": 1, "i": "漕运要地"}, {"n": "泉州", "lo": 118.6, "la": 24.9, "t": "port", "mz": 1, "i": "海上丝路起点"}, {"n": "山海关", "lo": 119.7, "la": 40.0, "t": "pass", "mz": 1, "i": "长城关隘"}, {"n": "嘉峪关", "lo": 98.3, "la": 39.8, "t": "pass", "mz": 1, "i": "河西走廊咽喉"}, {"n": "敦煌", "lo": 94.7, "la": 40.1, "t": "hist", "mz": 1, "i": "丝路要冲"}, {"n": "杭州", "lo": 120.2, "la": 30.3, "t": "hist", "mz": 1, "i": "丝织业中心"}, {"n": "广州", "lo": 113.3, "la": 23.1, "t": "port", "mz": 1, "i": "对外贸易港"}];
+const HIGHLIGHT = new Set(["\u5317\u4eac", "\u5357\u4eac"]);
+
+
+// ─── 降级河流数据（CDN 加载失败时使用）───────────────────────
+const FALLBACK_RIVERS = [
+  {n:'黄河',  w:1.4, pts:[[96,35],[100,34],[104,36],[108,35],[110,33],[114,34],[116,35],[117,36],[119,37]]},
+  {n:'长江',  w:1.4, pts:[[92,30],[98,30],[102,28],[106,29],[110,30],[114,30],[117,30],[120,31],[121,31]]},
+  {n:'黑龙江',w:1.0, pts:[[118,52],[115,50],[110,50],[106,52],[102,54]]},
+  {n:'澜沧江',w:0.7, pts:[[98,30],[100,27],[100,24],[100,22]]},
+  {n:'雅鲁藏布江',w:0.7,pts:[[82,30],[86,29],[90,28],[94,28],[96,27]]},
+  {n:'伊犁河',w:0.6, pts:[[72,43],[77,44],[82,45]]},
+  {n:'锡尔河',w:0.6, pts:[[60,43],[65,42],[68,40],[70,40]]},
+  {n:'阿姆河',w:0.6, pts:[[60,38],[65,38],[68,37],[72,38]]},
+  {n:'印度河',w:0.8, pts:[[72,36],[70,33],[68,30],[66,26],[62,24]]},
+  {n:'恒河',  w:0.8, pts:[[77,30],[80,26],[84,24],[88,22]]},
+  {n:'叶尼塞河',w:0.8,pts:[[90,52],[90,56],[90,60]]},
+  {n:'鄂毕河', w:0.7,pts:[[67,54],[67,57],[67,60]]},
+];
+
+// ─── SVG 初始化 ───────────────────────────────────────────────
+const wrap = document.getElementById('map-wrap');
+const W = wrap.offsetWidth || 900;
+const H = wrap.offsetHeight || 580;
+
+const svg = d3.select('#map-svg')
+  .attr('viewBox', `0 0 ${W} ${H}`);
+
+const defs = svg.append('defs');
+const g = svg.append('g');
+
+const proj = d3.geoMercator()
+  .center([90, 35]).scale(W * 0.85).translate([W/2, H/2]);
+const path = d3.geoPath().projection(proj);
+
+// 缩放 & 拖拽
+const zoomBehavior = d3.zoom().scaleExtent([0.4, 16])
+  .on('zoom', e => {
+    g.attr('transform', e.transform);
+    updateVisibility(e.transform.k);
+  });
+svg.call(zoomBehavior)
+  .on('mousedown.zoom', () => svg.classed('dragging', true))
+  .on('mouseup.zoom mouseleave.zoom', () => svg.classed('dragging', false));
+
+// 图层状态
+const layerState = { river: true, lake: true, mtn: true, city: true };
+
+function toggleLayer(name, btn) {
+  layerState[name] = !layerState[name];
+  btn.classList.toggle('layer-on', layerState[name]);
+  g.select(`#layer-${name}`).attr('display', layerState[name] ? null : 'none');
+  if (name === 'mtn') {
+    g.select('#layer-mtn-label').attr('display', layerState[name] ? null : 'none');
+  }
+}
+
+// ─── 主渲染 ───────────────────────────────────────────────────
+async function init() {
+  const tip = document.getElementById('tooltip');
+
+  const [world, rivers, lakes] = await Promise.all([
+    d3.json('/Harness/histrag/resources/data/countries-110m.json'),
+    d3.json('/Harness/histrag/resources/data/rivers.geojson').catch(() => null),
+    d3.json('/Harness/histrag/resources/data/lakes.geojson').catch(() => null),
+  ]);
+
+  document.getElementById('status').textContent = '';
+
+  // 海洋背景
+  g.append('path').attr('id','el-sphere')
+    .datum({type:'Sphere'}).attr('fill', T.sphere).attr('d', path);
+
+  // 经纬网
+  g.append('path').attr('id','el-grid')
+    .datum(d3.geoGraticule().step([10,10])())
+    .attr('fill','none').attr('stroke', T.grid).attr('stroke-width', 0.3).attr('d', path);
+
+  // 陆地
+  g.append('path').attr('id','el-land')
+    .datum(topojson.feature(world, world.objects.land))
+    .attr('fill', T.land).attr('stroke', T.border).attr('stroke-width', 0.4).attr('d', path);
+
+  // 国界
+  g.append('path').attr('id','el-border')
+    .datum(topojson.mesh(world, world.objects.countries, (a,b)=>a!==b))
+    .attr('fill','none').attr('stroke', T.border).attr('stroke-width', 0.6).attr('d', path);
+
+  // 山脉层
+  const mtnG = g.append('g').attr('id','layer-mtn');
+  MOUNTAINS.forEach(m => {
+    const pts = m.pts.map(([lo,la]) => proj([lo,la]));
+    const d = pts.map((p,i)=>`${i?'L':'M'}${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(' ')+'Z';
+    mtnG.append('path').attr('d',d)
+      .attr('fill', T.mtnFill).attr('stroke', T.mtnStroke)
+      .attr('stroke-width', 1.2).attr('opacity', 0.55);
+    mtnG.append('path').attr('d',d)
+      .attr('fill','none').attr('stroke','#fff')
+      .attr('stroke-width', 0.5).attr('opacity', 0.28);
+  });
+
+  // 山脉名称
+  const mtnLabelG = g.append('g').attr('id','layer-mtn-label');
+  MOUNTAINS.forEach(m => {
+    const cx = d3.mean(m.pts, d=>d[0]);
+    const cy = d3.mean(m.pts, d=>d[1]);
+    const [x,y] = proj([cx,cy]);
+    mtnLabelG.append('text')
+      .attr('x',x).attr('y',y).attr('text-anchor','middle')
+      .attr('font-size',8).attr('font-style','italic')
+      .attr('fill', T.mtn).attr('paint-order','stroke')
+      .attr('stroke', T.sphere).attr('stroke-width',2.5)
+      .text(m.name);
+  });
+
+  // 河流层
+  const riverG = g.append('g').attr('id','layer-river');
+  if (rivers) {
+    riverG.selectAll('path')
+      .data(rivers.features)
+      .join('path')
+      .attr('fill','none')
+      .attr('stroke', T.river)
+      .attr('stroke-width', d => Math.max(0.3, (10-(d.properties?.scalerank??8))*0.22))
+      .attr('stroke-opacity', d => {
+        const r = d.properties?.scalerank ?? 8;
+        return r<=3?0.9:r<=6?0.65:0.35;
+      })
+      .attr('d', path);
+  } else {
+    FALLBACK_RIVERS.forEach(r => {
+      const line = d3.line()(r.pts.map(([lo,la])=>proj([lo,la])));
+      riverG.append('path').attr('d',line)
+        .attr('fill','none').attr('stroke', T.river)
+        .attr('stroke-width', r.w).attr('stroke-opacity', 0.75);
+    });
+  }
+
+  // 湖泊层
+  const lakeG = g.append('g').attr('id','layer-lake');
+  if (lakes) {
+    lakeG.selectAll('path').data(lakes.features).join('path')
+      .attr('fill', T.lake).attr('stroke', T.lakeStroke)
+      .attr('stroke-width', 0.4).attr('d', path);
+  }
+
+  // 城市 / 地名层
+  const cityG = g.append('g').attr('id','layer-city');
+  PLACES.forEach(p => {
+    const [x,y] = proj([p.lo, p.la]);
+    if (x<-80||x>W+80||y<-80||y>H+80) return;
+
+    const hasPoint = ['cap','prov','hist'].includes(p.t);
+    const isCenter = ['sea','region'].includes(p.t);
+
+    const gr = cityG.append('g')
+      .attr('class', `place mz${p.mz}`)
+      .attr('transform', `translate(${x.toFixed(1)},${y.toFixed(1)})`)
+      .style('cursor', p.i ? 'pointer' : 'default')
+      .on('mouseover', ev => {
+        if (!p.i) return;
+        tip.style.display = 'block';
+        tip.innerHTML = `<strong>${p.n}</strong>${p.i}`;
+      })
+      .on('mousemove', ev => {
+        const r = wrap.getBoundingClientRect();
+        tip.style.left = (ev.clientX - r.left + 14) + 'px';
+        tip.style.top  = (ev.clientY - r.top  - 44) + 'px';
+      })
+      .on('mouseout', () => tip.style.display = 'none');
+
+    if (hasPoint) {
+      const r = p.t==='cap' ? 3.5 : 2.2;
+      const fc = p.t==='cap' ? T.cap : p.t==='hist' ? T.hist : T.prov;
+      gr.append('circle').attr('r',r)
+        .attr('fill',fc).attr('stroke','#fff').attr('stroke-width',0.7);
+    }
+
+    const col = p.t==='cap'?T.cap : p.t==='prov'?T.prov : p.t==='hist'?T.hist
+              : p.t==='sea'?T.sea : p.t==='region'?T.region : T.mtn;
+    const fs  = p.t==='cap'?11 : p.t==='prov'?9.5 : p.t==='hist'?8.5
+              : p.t==='region'?9 : 8;
+
+    gr.append('text')
+      .attr('x', isCenter?0:4).attr('y', isCenter?0:3.5)
+      .attr('text-anchor', isCenter?'middle':'start')
+      .attr('font-size', fs)
+      .attr('font-weight', p.t==='cap'?'bold':'normal')
+      .attr('font-style', isCenter?'italic':'normal')
+      .attr('fill', col).attr('paint-order','stroke')
+      .attr('stroke', T.sphere).attr('stroke-width', 2.5)
+      .text(p.n);
+  });
+
+  updateVisibility(1);
+}
+
+// ─── 缩放时更新城市可见性 ──────────────────────────────────────
+function updateVisibility(k) {
+  const lv = k >= 3.5 ? 3 : k >= 1.8 ? 2 : 1;
+  g.selectAll('.place').each(function() {
+    const mz = parseInt(this.className.baseVal.match(/mz(\d)/)?.[1] || 1);
+    const t = d3.select(this).attr('transform');
+    const m = t.match(/translate\(([^,]+),([^)]+)\)/);
+    const base = m ? `translate(${m[1]},${m[2]})` : t;
+    d3.select(this)
+      .attr('display', mz <= lv ? null : 'none')
+      .attr('transform', `${base} scale(${(1/k).toFixed(4)})`);
+  });
+  // 山脉名同步缩放
+  g.select('#layer-mtn-label').selectAll('text')
+    .attr('transform', `scale(${(1/k).toFixed(4)})`);
+  g.select('#layer-mtn-label').attr('transform', null);
+}
+
+// ─── 主题切换 ─────────────────────────────────────────────────
+function applyTheme() {
+  g.select('#el-sphere').attr('fill', T.sphere);
+  g.select('#el-grid').attr('stroke', T.grid);
+  g.select('#el-land').attr('fill', T.land).attr('stroke', T.border);
+  g.select('#el-border').attr('stroke', T.border);
+  g.select('#layer-river').selectAll('path').attr('stroke', T.river);
+  g.select('#layer-lake').selectAll('path').attr('fill', T.lake).attr('stroke', T.lakeStroke);
+  g.select('#layer-mtn').selectAll('path:first-child').attr('fill', T.mtnFill).attr('stroke', T.mtnStroke);
+  g.select('#layer-mtn-label').selectAll('text').attr('fill', T.mtn).attr('stroke', T.sphere);
+  // 城市颜色
+  g.selectAll('.place').each(function(d, i) {
+    const el = d3.select(this);
+    const cls = this.className.baseVal;
+    const isHist = cls.includes('mz3') && !cls.includes('prov');
+    el.select('circle').attr('fill',
+      cls.match(/mz[12]/) && !isHist ? T.prov : T.hist);
+    // 重新着色逻辑较复杂，实际项目可存储数据引用后精确更新
+  });
+  svg.style('background', T.sphere);
+}
+
+function setTheme(name, btn) {
+  document.querySelectorAll('[onclick^="setTheme"]').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  T = THEMES[name];
+  applyTheme();
+}
+
+// ─── 启动 ─────────────────────────────────────────────────────
+init().catch(e => {
+  document.getElementById('status').textContent = '数据加载失败：' + e.message;
+  console.error(e);
+});
+
+// 响应窗口大小变化
+window.addEventListener('resize', () => location.reload());
+</script>
+</body>
+</html>

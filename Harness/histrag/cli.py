@@ -11,6 +11,7 @@ from rich.markdown import Markdown
 
 from .integration import create_historical_runtime
 from .lightrag import LightRAGClient
+from lightrag import QueryParam
 
 app = typer.Typer(name="histrag", help="HistRAG - Historical Research Agent", add_completion=False)
 console = Console()
@@ -41,7 +42,6 @@ def query(
             cwd=cwd,
             model=model,
             max_turns=max_turns,
-            rag_working_dir=DEFAULT_WORKING_DIR,
         )
 
         await runtime.rag_client.initialize()
@@ -68,17 +68,33 @@ def query(
 @app.command()
 def lightrag(
     question: str = typer.Argument(..., help="Query for LightRAG (direct RAG, no agent)"),
-    working_dir: Path = typer.Option(DEFAULT_WORKING_DIR, "--working-dir", "-d"),
+    config_path: Path = typer.Option(None, "--config", "-c"),
     mode: str = typer.Option("mix", "--mode"),
 ) -> None:
     """Direct LightRAG query without full agent."""
+    from .lightrag.config import create_lightrag_from_config
+
     console.print(f"[bold blue]Question:[/bold blue] {question}")
     console.print(f"[dim]Mode:[/dim] {mode}\n")
 
+    if config_path is None:
+        for path in [
+            Path.cwd() / "rag_config.yaml",
+            Path(__file__).parent.parent / "rag_config.yaml",
+        ]:
+            if path.exists():
+                config_path = path
+                break
+
     async def _run():
-        async with LightRAGClient(working_dir=working_dir) as client:
-            result = await client.aquery(question, mode=mode)
+        rag, _ = create_lightrag_from_config(config_path)
+        await rag.initialize_storages()
+
+        try:
+            result = await rag.aquery(question, param=QueryParam(mode=mode))
             console.print(Markdown(f"**Response:**\n\n{result}"))
+        finally:
+            await rag.finalize_storages()
 
     asyncio.run(_run())
 
@@ -167,6 +183,59 @@ def version_cmd() -> None:
     """Show HistRAG version."""
     from . import __version__
     console.print(f"HistRAG v{__version__}")
+
+
+@app.command()
+def create_graph(
+    input_file: Path = typer.Argument(..., help="Input text file to create knowledge graph"),
+    config_path: Path = typer.Option(None, "--config", "-c"),
+    chunk_token_size: int = typer.Option(1200, "--chunk-size"),
+    chunk_overlap: int = typer.Option(100, "--overlap"),
+) -> None:
+    """Create knowledge graph from input document(s).
+
+    Reads a text file and indexes it into the knowledge graph storage.
+    Supports Neo4j, vector storage, and graph extraction.
+    """
+    from .lightrag.config import create_lightrag_from_config
+
+    console.print(f"[bold blue]Creating knowledge graph from:[/bold blue] {input_file}")
+
+    if not input_file.exists():
+        console.print(f"[red]Error: File not found: {input_file}[/red]")
+        raise typer.Exit(1)
+
+    # Find config
+    if config_path is None:
+        for path in [
+            Path.cwd() / "rag_config.yaml",
+            Path(__file__).parent.parent / "rag_config.yaml",
+        ]:
+            if path.exists():
+                config_path = path
+                break
+
+    if config_path is None:
+        console.print("[red]Error: No config file found. Use --config or place rag_config.yaml in project root.[/red]")
+        raise typer.Exit(1)
+
+    console.print(f"[dim]Using config:[/dim] {config_path}")
+
+    async def _run():
+        rag, config = create_lightrag_from_config(config_path)
+        await rag.initialize_storages()
+
+        try:
+            with open(input_file, "r", encoding="utf-8") as f:
+                text = f.read()
+
+            console.print(f"[dim]Indexing {len(text)} characters...[/dim]")
+            await rag.ainsert(text)
+            console.print("[bold green]Knowledge graph created successfully![/bold green]")
+        finally:
+            await rag.finalize_storages()
+
+    asyncio.run(_run())
 
 
 @app.command()

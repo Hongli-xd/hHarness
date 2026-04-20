@@ -44,9 +44,25 @@ def create_historical_runtime(
     cwd = Path(cwd).resolve()
 
     # 1. Initialize LightRAG Client
+    # Auto-detect config from cwd or project dir
+    if rag_config_path is None:
+        for path in [
+            Path(__file__).parent.parent / "rag_config.yaml",
+        ]:
+            if path.exists():
+                rag_config_path = path
+                break
+
+    # Load config if found
+    config = None
     if rag_config_path:
         from .lightrag.config import create_lightrag_from_config
-        rag_client, _ = create_lightrag_from_config(rag_config_path)
+
+        rag, config = create_lightrag_from_config(rag_config_path)
+        rag_client = LightRAGClient(
+            working_dir=rag.working_dir,
+            _rag=rag,
+        )
     elif rag_working_dir:
         rag_client = LightRAGClient(working_dir=rag_working_dir)
     else:
@@ -61,7 +77,15 @@ def create_historical_runtime(
     # 3. Create API client if not provided
     if api_client is None:
         from .api import AnthropicApiClient
-        api_client = AnthropicApiClient()
+
+        if config:
+            llm_config = config.get("llm", {})
+            api_key = llm_config.get("api_key")
+            base_url = llm_config.get("base_url")
+            model = llm_config.get("model_name", model)
+            api_client = AnthropicApiClient(api_key=api_key, base_url=base_url)
+        else:
+            api_client = AnthropicApiClient()
 
     # 4. Create tool registry with historical tools
     tool_registry = create_historical_tool_registry(rag_client)

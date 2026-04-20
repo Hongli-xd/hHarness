@@ -23,8 +23,8 @@ classifiers = [
 ]
 
 dependencies = [
-    "openharness @ file:///home/selom/projects/literag/OpenHarness",
-    "lightrag-hku @ file:///home/selom/projects/literag/LightRAG",
+    "openharness-ai @ file:///home/selom/project/hHarness/OpenHarness",
+    "lightrag-hku @ file:///home/selom/project/hHarness/LightRAG",
 ]
 
 [project.optional-dependencies]

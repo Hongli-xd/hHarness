@@ -27,6 +27,7 @@ class LightRAGClient:
         working_dir: str | Path,
         llm_model_func: Any = None,
         embedding_func: Any = None,
+        _rag: Any = None,
         **kwargs: Any,
     ):
         """Initialize LightRAG client.
@@ -35,17 +36,21 @@ class LightRAGClient:
             working_dir: Directory for LightRAG storage cache
             llm_model_func: LLM function for queries (required for aquery)
             embedding_func: Embedding function (required for indexing)
+            _rag: Existing LightRAG instance (optional, takes ownership)
             **kwargs: Additional arguments passed to LightRAG constructor
         """
         self.working_dir = Path(working_dir)
         self.working_dir.mkdir(parents=True, exist_ok=True)
 
-        self._rag = LightRAG(
-            working_dir=str(self.working_dir),
-            llm_model_func=llm_model_func,
-            embedding_func=embedding_func,
-            **kwargs,
-        )
+        if _rag is not None:
+            self._rag = _rag
+        else:
+            self._rag = LightRAG(
+                working_dir=str(self.working_dir),
+                llm_model_func=llm_model_func,
+                embedding_func=embedding_func,
+                **kwargs,
+            )
         self._initialized = False
 
     async def initialize(self) -> None:

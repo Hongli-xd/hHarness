@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import asyncio
 import os
 from dataclasses import dataclass
 from typing import Any, AsyncIterator
@@ -47,11 +46,17 @@ class ApiMessageCompleteEvent:
 class AnthropicApiClient:
     """Simple Anthropic API client with streaming support."""
 
-    def __init__(self, api_key: str | None = None):
-        self._api_key = api_key or os.environ.get("ANTHROPIC_API_KEY")
+    def __init__(self, api_key: str | None = None, base_url: str | None = None):
+        self._api_key = api_key or os.environ.get("ANTHROPIC_API_KEY") or os.environ.get("MINIMAX_API_KEY")
         if not self._api_key:
-            raise ValueError("ANTHROPIC_API_KEY not set")
-        self._client = anthropic.AsyncAnthropic(api_key=self._api_key)
+            raise ValueError("ANTHROPIC_API_KEY or MINIMAX_API_KEY not set")
+        if base_url:
+            self._client = anthropic.AsyncAnthropic(
+                api_key=self._api_key,
+                base_url=base_url,
+            )
+        else:
+            self._client = anthropic.AsyncAnthropic(api_key=self._api_key)
 
     async def stream_message(self, request: ApiMessageRequest) -> AsyncIterator[Any]:
         """Yield streamed events for the request."""

@@ -13,6 +13,8 @@ from typing import Any
 
 import yaml
 
+from lightrag import LightRAG
+
 
 def load_config(config_path: str | Path) -> dict[str, Any]:
     """Load configuration from YAML file.
@@ -41,7 +43,12 @@ def create_llm_client(
     from lightrag.llm.anthropic import anthropic_complete
 
     llm_config = config.get("llm", {})
+    model_func = llm_config.get("model_func", "anthropic")
+
     api_key = os.environ.get("ANTHROPIC_API_KEY") or llm_config.get("api_key")
+    if not api_key:
+        api_key = os.environ.get("MINIMAX_API_KEY")
+
     base_url = llm_config.get("base_url")
     model_name = llm_config.get("model_name", "claude-sonnet-4-20250514")
 
@@ -53,11 +60,18 @@ def create_llm_client(
     if base_url:
         llm_kwargs["base_url"] = base_url
 
-    return anthropic_complete, llm_kwargs, model_name
+    if model_func == "anthropic":
+        return anthropic_complete, llm_kwargs, model_name
+
+    raise ValueError(f"Unknown model_func: {model_func}")
 
 
 def create_embedding_func(config: dict[str, Any]):
     """Create embedding function from config.
+
+    Supports two modes:
+    - Ollama (default): uses ollama_embed with local Ollama server
+    - API mode: uses openai-compatible embedding API when api_key is present
 
     Args:
         config: Configuration dict with 'embedding' section
@@ -65,20 +79,39 @@ def create_embedding_func(config: dict[str, Any]):
     Returns:
         EmbeddingFunc instance
     """
-    from lightrag.llm.ollama import ollama_embed
     from lightrag.utils import EmbeddingFunc
 
     embedding_config = config.get("embedding", {})
+    api_key = embedding_config.get("api_key")
+    base_url = embedding_config.get("base_url")
 
-    return EmbeddingFunc(
-        embedding_dim=embedding_config.get("dimension", 768),
-        max_token_size=embedding_config.get("max_token_size", 8192),
-        func=partial(
-            ollama_embed.func,
-            embed_model=embedding_config.get("model", "nomic-embed-text"),
-            host=embedding_config.get("host", "http://localhost:11434"),
-        ),
-    )
+    if api_key and base_url:
+        # Use OpenAI-compatible API embedding
+        from lightrag.llm.openai import openai_embed
+
+        return EmbeddingFunc(
+            embedding_dim=embedding_config.get("dimension", 768),
+            max_token_size=embedding_config.get("max_token_size", 8192),
+            func=partial(
+                openai_embed.func,  # Use .func to avoid double-wrapping from decorator
+                api_key=api_key,
+                model=embedding_config.get("model", "text-embedding-3-small"),
+                base_url=base_url,
+            ),
+        )
+    else:
+        # Fallback to Ollama
+        from lightrag.llm.ollama import ollama_embed
+
+        return EmbeddingFunc(
+            embedding_dim=embedding_config.get("dimension", 768),
+            max_token_size=embedding_config.get("max_token_size", 8192),
+            func=partial(
+                ollama_embed.func,
+                embed_model=embedding_config.get("model", "nomic-embed-text"),
+                host=embedding_config.get("host", "http://localhost:11434"),
+            ),
+        )
 
 
 def create_lightrag_from_config(
@@ -130,7 +163,7 @@ def create_lightrag_from_config(
 
     # Build LightRAG
     rag = LightRAG(
-        working_dir=config.get("working_dir", "./rag_storage"),
+        working_dir=os.path.expanduser(config.get("working_dir", "./rag_storage")),
         llm_model_func=llm_func,
         llm_model_name=model_name,
         embedding_func=embedding_func,

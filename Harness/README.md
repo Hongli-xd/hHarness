@@ -77,7 +77,7 @@ pip install -e .
 
 ```bash
 # Agent 模式（完整工具调用）
-python -m histrag query "分析秦始皇统一六国的因果链"
+python -m histrag query "《元和郡县图志》是以唐宪宗‘元和’年间的疆域为准的。请列举书中记录的全国‘道’的名称。相比于唐初的‘贞观十道’或开元‘十五道’，元和年间的‘道’在划分和数量上发生了哪些关键变化？这种变化反映了中晚唐怎样的政治格局？"
 
 # 直接 RAG 模式（快速查询）
 python -m histrag lightrag "秦始皇的功过"
