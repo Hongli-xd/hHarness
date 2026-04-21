@@ -26,31 +26,95 @@ class TimelineInput(BaseModel):
 
 
 class TimelineTool(BaseTool):
-    """Timeline visualization tool for historical events.
+    """历史时间轴可视化工具。
 
-    Generates an interactive HTML timeline from a list of historical events,
-    organized by category (military, political, economic, disaster) with
-    dynasty periodization.
-    """
+从历史事件列表生成可交互的HTML时间轴，
+按类别（军事、政治、经济、灾异）组织，
+并标注朝代分期。
+
+【功能】
+- 生成可缩放、可点击的HTML时间轴
+- 按类别筛选显示（军事/政治/财政/灾异）
+- 点击事件查看详情
+- 朝代分期标注
+- 置信度指示器
+"""
 
     name = "timeline"
-    description = """Generate an interactive historical timeline visualization.
+    description = """生成可交互的历史时间轴可视化图表。
 
-INPUT: List of historical events with year, title, description, category.
-OUTPUT: Complete HTML file showing a zoomable, clickable timeline.
+【输入】
+历史事件列表，包含年份、标题、描述、类别
 
-Use this tool when the user asks to:
-- "梳理时间轴" / "show me the timeline"
-- "按时间顺序整理" / "arrange by date"
-- Generate any chronological visualization of historical events
+【输出】
+完整的HTML文件，展示可缩放、可点击的时间轴
 
-The timeline supports:
-- Category filtering (military/political/economic/disaster)
-- Event details on click
-- Dynasty periodization markers
-- Confidence indicators
+【使用场景】
+- 用户要求"梳理时间轴"
+- "按时间顺序整理"
+- 生成历史事件的年表可视化
+- 需要展示历史事件的发展脉络
+
+【时间轴功能】
+- 类别筛选：军事(mil)、政治(pol)、财政(eco)、灾异(nat)
+- 点击事件节点查看详情
+- 朝代分界线标注
+- 置信度指示（高/中/低）
 """
     input_model = TimelineInput
+
+    def get_schema_overrides(self) -> dict[str, Any]:
+        """返回中文Schema描述"""
+        return {
+            "description": self.description,
+            "input_schema": {
+                "type": "object",
+                "properties": {
+                    "events": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "year": {"type": "integer", "description": "事件年份（负数表示公元前）"},
+                                "title": {"type": "string", "description": "事件标题"},
+                                "description": {"type": "string", "description": "事件详细描述"},
+                                "category": {
+                                    "type": "string",
+                                    "enum": ["mil", "pol", "eco", "nat"],
+                                    "description": "事件类别：\n- mil：军事（如战争、战役）\n- pol：政治（如改革、政变）\n- eco：财政/经济（如税制、贸易）\n- nat：灾异（如蝗灾、地震）"
+                                },
+                                "confidence": {
+                                    "type": "string",
+                                    "enum": ["high", "mid", "low"],
+                                    "description": "置信度：high（高）、mid（中）、low（低）"
+                                }
+                            },
+                            "required": ["year", "title", "category"]
+                        },
+                        "description": "历史事件列表，每个事件包含：\n- year：年份（负数=公元前）\n- title：事件标题\n- description：详细描述（可选）\n- category：类别（必填）\n- confidence：置信度（默认high）"
+                    },
+                    "title": {
+                        "type": "string",
+                        "default": "历史时间轴",
+                        "description": "时间轴标题"
+                    },
+                    "year_start": {
+                        "type": "integer",
+                        "description": "起始年份（不填则自动从事件中计算）"
+                    },
+                    "year_end": {
+                        "type": "integer",
+                        "description": "结束年份（不填则自动从事件中计算）"
+                    },
+                    "highlight_years": {
+                        "type": "array",
+                        "items": {"type": "integer"},
+                        "description": "需要高亮标注的年份列表"
+                    }
+                },
+                "required": ["events"]
+            }
+        }
 
     def is_read_only(self, arguments: TimelineInput) -> bool:
         return True

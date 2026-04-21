@@ -39,32 +39,90 @@ class MapLocationInput(BaseModel):
 
 
 class MapLocationTool(BaseTool):
-    """Interactive historical map tool.
+    """历史地图可视化工具。
 
-    Renders historical places on a zoomable SVG map with layers for
-    rivers, mountains, cities, and connections between places.
-    """
+在可缩放的SVG地图上渲染历史地名，
+包含河流、山脉、城市等图层，
+以及地名之间的关联线。
+
+【功能】
+- 生成可交互的HTML历史地图
+- 支持平移和缩放（鼠标滚轮+拖拽）
+- 主题切换（自然/羊皮纸/暗色）
+- 图层开关（河流、湖泊、山脉、城市）
+- 悬停显示地名信息
+- 关联地之间的连线
+"""
 
     name = "map_location"
-    description = """Render historical places on an interactive map.
+    description = """在交互式地图上展示历史地名。
 
-INPUT: List of places with name, coordinates, type, and info.
-OUTPUT: Complete HTML file showing an interactive map with the places.
+【输入】
+地名列表，包含名称、经纬度坐标、类型、信息
 
-Use this tool when the user asks to:
-- "把地点标在地图上" / "show these places on a map"
-- "描绘历史地点" / "display historical locations"
-- "在地图上查看" / "view on a map"
-- Visualize geographic relationships between historical places
+【输出】
+完整的HTML文件，展示带有地名标记的交互式地图
 
-The map supports:
-- Pan and zoom (mouse wheel + drag)
-- Theme switching (natural/parchment/dark)
-- Layer toggles (rivers, lakes, mountains, cities)
-- Hover tooltips with place information
-- Connection lines between related places
+【使用场景】
+- 用户要求"把地点标在地图上"
+- "描绘历史地点"
+- "在地图上查看"
+- 可视化历史地名之间的地理关系
+
+【地图功能】
+- 平移和缩放（滚轮缩放+拖拽平移）
+- 主题切换（自然色/羊皮纸/暗色）
+- 图层开关（河流、湖泊、山脉、城市）
+- 悬停显示地名详细信息
+- 关联地之间的连线
 """
     input_model = MapLocationInput
+
+    def get_schema_overrides(self) -> dict[str, Any]:
+        """返回中文Schema描述"""
+        return {
+            "description": self.description,
+            "input_schema": {
+                "type": "object",
+                "properties": {
+                    "places": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "name": {"type": "string", "description": "地名名称"},
+                                "longitude": {"type": "number", "description": "经度（东经为正）"},
+                                "latitude": {"type": "number", "description": "纬度（北纬为正）"},
+                                "place_type": {
+                                    "type": "string",
+                                    "enum": ["cap", "prov", "hist", "pass", "battle", "port", "region"],
+                                    "description": "地点类型：\n- cap：首都/直辖市\n- prov：省会/首府\n- hist：历史城市\n- pass：关隘/山口\n- battle：战场\n- port：港口\n- region：区域"
+                                },
+                                "info": {"type": "string", "description": "地名描述/信息提示"},
+                                "connections": {
+                                    "type": "array",
+                                    "items": {"type": "string"},
+                                    "description": "关联地名列表，会在地图上画连线"
+                                }
+                            },
+                            "required": ["name", "longitude", "latitude", "place_type"]
+                        },
+                        "description": "地点列表，每个地点包含：\n- name：地名\n- longitude：经度\n- latitude：纬度\n- place_type：类型\n- info：描述（可选）\n- connections：关联地名列表（可选）"
+                    },
+                    "title": {
+                        "type": "string",
+                        "default": "历史地图",
+                        "description": "地图标题"
+                    },
+                    "highlight_places": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "需要高亮显示的地名列表"
+                    }
+                },
+                "required": ["places"]
+            }
+        }
 
     def is_read_only(self, arguments: MapLocationInput) -> bool:
         return True

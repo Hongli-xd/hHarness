@@ -18,6 +18,8 @@ class HistorianRuntime:
     engine: AgentEngine
     rag_client: LightRAGClient
     tool_registry: Any  # ToolRegistry
+    skills_dir: Path | None = None
+    memory_dir: Path | None = None
 
 
 def create_historical_runtime(
@@ -30,18 +32,38 @@ def create_historical_runtime(
     api_client: Any = None,
     rag_working_dir: str | Path | None = None,
     rag_config_path: str | Path | None = None,
-    extra_skill_dirs: list[str] | None = None,
+    extra_skill_dirs: list[str] | Path | None = None,
+    extra_memory_dirs: list[str] | Path | None = None,
     **kwargs: Any,
 ) -> HistorianRuntime:
     """Create historical agent runtime.
 
     This function:
     1. Initializes LightRAG Client
-    2. Builds historian system prompt
+    2. Builds historian system prompt from ohmo/ files
     3. Creates tool registry with historical tools
     4. Creates AgentEngine
+    5. Sets up skills and memory directories
     """
     cwd = Path(cwd).resolve()
+
+    # Determine skills directory
+    if extra_skill_dirs:
+        if isinstance(extra_skill_dirs, (str, Path)):
+            skills_dir = Path(extra_skill_dirs)
+        else:
+            skills_dir = Path(extra_skill_dirs[0])
+    else:
+        skills_dir = Path(__file__).parent.parent / "skills"
+
+    # Determine memory directory
+    if extra_memory_dirs:
+        if isinstance(extra_memory_dirs, (str, Path)):
+            memory_dir = Path(extra_memory_dirs)
+        else:
+            memory_dir = Path(extra_memory_dirs[0])
+    else:
+        memory_dir = Path(__file__).parent.parent / "ohmo" / "memory"
 
     # 1. Initialize LightRAG Client
     # Auto-detect config from cwd or project dir
@@ -71,8 +93,13 @@ def create_historical_runtime(
         )
 
     # 2. Build historian system prompt
+    # Uses ohmo/soul.md, ohmo/identity.md, skills/, and memory/
     if system_prompt is None:
-        system_prompt = build_historian_system_prompt(cwd=cwd)
+        system_prompt = build_historian_system_prompt(
+            cwd=cwd,
+            include_skills=True,
+            include_memory=True,
+        )
 
     # 3. Create API client if not provided
     if api_client is None:
@@ -104,6 +131,8 @@ def create_historical_runtime(
         engine=engine,
         rag_client=rag_client,
         tool_registry=tool_registry,
+        skills_dir=skills_dir if skills_dir.exists() else None,
+        memory_dir=memory_dir if memory_dir.exists() else None,
     )
 
 
@@ -132,8 +161,67 @@ async def run_historical_query(
         await runtime.rag_client.finalize()
 
 
+# Memory management functions
+def get_memory_dir() -> Path:
+    """Get the HistRAG memory directory."""
+    return Path.home() / ".histrag" / "memory"
+
+
+def load_project_memory(cwd: str | Path | None = None) -> str | None:
+    """Load memory content for display to the user."""
+    memory_dir = get_memory_dir()
+
+    if cwd:
+        # Project-specific memory
+        from hashlib import sha1
+        path = Path(cwd).resolve()
+        digest = sha1(str(path).encode("utf-8")).hexdigest()[:12]
+        memory_dir = memory_dir / f"{path.name}-{digest}"
+
+    memory_dir.mkdir(parents=True, exist_ok=True)
+    memory_index = memory_dir / "MEMORY.md"
+
+    if memory_index.exists():
+        return memory_index.read_text(encoding="utf-8")
+    return None
+
+
+def add_memory_entry(cwd: str | Path | None, title: str, content: str) -> Path:
+    """Add a memory entry to the project memory."""
+    import re
+
+    memory_dir = get_memory_dir()
+
+    if cwd:
+        from hashlib import sha1
+        path = Path(cwd).resolve()
+        digest = sha1(str(path).encode("utf-8")).hexdigest()[:12]
+        memory_dir = memory_dir / f"{path.name}-{digest}"
+
+    memory_dir.mkdir(parents=True, exist_ok=True)
+
+    # Create slug from title
+    slug = re.sub(r"[^a-zA-Z0-9]+", "_", title.strip().lower()).strip("_") or "memory"
+    memory_path = memory_dir / f"{slug}.md"
+
+    # Write memory file
+    memory_path.write_text(content.strip() + "\n", encoding="utf-8")
+
+    # Update index
+    memory_index = memory_dir / "MEMORY.md"
+    existing = memory_index.read_text(encoding="utf-8") if memory_index.exists() else "# Memory Index\n"
+    if memory_path.name not in existing:
+        existing = existing.rstrip() + f"- [{title}]({memory_path.name})\n"
+        memory_index.write_text(existing, encoding="utf-8")
+
+    return memory_path
+
+
 __all__ = [
     "HistorianRuntime",
     "create_historical_runtime",
     "run_historical_query",
+    "get_memory_dir",
+    "load_project_memory",
+    "add_memory_entry",
 ]

@@ -29,7 +29,8 @@ class RAGMode(str, Enum):
 class RAGQueryInput(BaseModel):
     """Input schema for the RAG Query Tool."""
 
-    query: str = Field(
+    query: str | None = Field(
+        default=None,
         description="Research question or topic to query"
     )
     mode: RAGMode = Field(
@@ -55,35 +56,83 @@ class RAGQueryInput(BaseModel):
 
 
 class RAGQueryTool(BaseTool):
-    """General RAG Query Tool for historical research.
+    """通用RAG查询工具，用于历史研究。
 
-    Provides full-text RAG query capabilities with multiple retrieval modes.
-    Use this when you need to search the full text corpus, not just
-    entity relationships.
+提供全文检索增强生成能力，适合搜索整个文档语料库，
+而不仅仅是实体关系图谱。
 
-    Modes:
-    - mix (recommended): Combines KG and vector retrieval with reranking
-    - hybrid: Local + global retrieval
-    - local: Context-dependent retrieval for specific entities
-    - global: Community-based broad knowledge retrieval
-    - naive: Direct vector search without graph
-    """
+【五种检索模式】
+- mix（推荐）：结合知识图谱和向量检索，重排序后返回
+- hybrid：混合本地检索和全局检索
+- local：聚焦特定实体及其直接上下文
+- global：基于社区的广域知识检索
+- naive：纯向量相似度搜索
 
+【返回内容】
+- LLM生成的回答
+- 附带源文档片段引用
+"""
     name = "rag_query"
-    description = """Query the historical knowledge base using Retrieval-Augmented Generation.
+    description = """RAG（检索增强生成）查询工具，用于全文历史研究。
 
-Use this for full-text research queries that search through the document corpus.
+【功能说明】
+对历史文档语料库进行全文检索，由LLM生成综合回答。
 
-Modes:
-- mix (recommended): Combines knowledge graph and vector retrieval with reranking
-- hybrid: Combines local (specific) and global (broad) retrieval
-- local: Focus on specific entities and their immediate context
-- global: Broad retrieval from entity communities
-- naive: Direct vector similarity search only
+【必须传入的参数】
+- query：必须填入【当前用户问题原文】，不能为空，不能省略
 
-Returns LLM-generated response with citations to source chunks.
+【五种检索模式详解】
+1. mix（推荐）：融合知识图谱+向量检索+重排序，效果最均衡
+2. hybrid：结合局部检索（精准）和全局检索（广度）
+3. local：专注特定实体的上下文，精准但范围窄
+4. global：基于实体社区的广域检索，适合宏观问题
+5. naive：纯向量相似度，速度快但忽略图结构
+
+【返回内容】
+LLM生成的回答文本，附带源文档片段的引用和出处信息
+
+【使用场景】
+- 需要LLM综合多份文档回答复杂历史问题
+- 研究跨越多个主题或时期的历史问题
+- 需要理解文档之间的语义关联
 """
     input_model = RAGQueryInput
+
+    def get_schema_overrides(self) -> dict[str, Any]:
+        """返回中文Schema描述"""
+        return {
+            "description": self.description,
+            "input_schema": {
+                "type": "object",
+                "properties": {
+                    "query": {
+                        "type": "string",
+                        "description": "【必填】研究问题或查询主题，直接填入用户原始问题，不能为空\n例如：\"唐代藩镇割据的原因和影响\"、\"贞观之治的政治制度\""
+                    },
+                    "mode": {
+                        "type": "string",
+                        "enum": ["local", "global", "hybrid", "naive", "mix"],
+                        "description": "检索模式：\n- mix（推荐）：融合KG和向量检索重排序，均衡效果好\n- hybrid：混合本地+全局检索\n- local：聚焦特定实体上下文，精准但窄\n- global：社区广域检索，适合宏观问题\n- naive：纯向量搜索，速度快但忽略图结构"
+                    },
+                    "top_k": {
+                        "type": "integer",
+                        "default": 60,
+                        "description": "从知识图谱检索的实体/关系数量上限，默认60条"
+                    },
+                    "chunk_top_k": {
+                        "type": "integer",
+                        "default": 20,
+                        "description": "从文本库检索的文档片段数量上限，默认20条"
+                    },
+                    "stream": {
+                        "type": "boolean",
+                        "default": False,
+                        "description": "是否流式输出回答，True则边生成边打印"
+                    }
+                },
+                "required": ["query"]
+            }
+        }
 
     def __init__(self, rag_client: LightRAGClient):
         """Initialize RAG Query Tool.
@@ -103,6 +152,12 @@ Returns LLM-generated response with citations to source chunks.
     ) -> ToolResult:
         """Execute the RAG query."""
         try:
+            if not arguments.query:
+                return ToolResult(
+                    output="query is required",
+                    is_error=True,
+                )
+
             result = await self.rag_client.aquery(
                 query=arguments.query,
                 mode=arguments.mode.value,
@@ -133,7 +188,8 @@ Returns LLM-generated response with citations to source chunks.
 class RAGDataQueryInput(BaseModel):
     """Input schema for RAG data-only query (no LLM generation)."""
 
-    query: str = Field(
+    query: str | None = Field(
+        default=None,
         description="Research question or topic"
     )
     mode: RAGMode = Field(
@@ -155,18 +211,64 @@ class RAGDataQueryInput(BaseModel):
 
 
 class RAGDataQueryTool(BaseTool):
-    """RAG Data Query Tool - returns structured data without LLM generation.
+    """RAG数据查询工具 - 返回结构化数据，不进行LLM生成。
 
-    Use this when you want to retrieve raw context without LLM synthesis,
-    useful for when the agent needs to process the raw data itself.
-    """
+当需要获取原始上下文而不是LLM综合回答时使用，
+适合Agent自己处理数据或进行进一步分析。
+"""
 
     name = "rag_data_query"
-    description = """Query the knowledge base and return structured data without LLM synthesis.
+    description = """RAG数据查询工具 - 仅返回检索到的原始数据，不进行LLM生成。
 
-Returns raw entities, relations, and text chunks from the knowledge graph.
-Use when you want to process the raw data yourself or need context for analysis.
+【必须传入的参数】
+- query：必须填入【当前用户问题原文】，不能为空，不能省略
+
+【功能说明】
+直接返回从知识图谱和文档库检索到的实体、关系和文本片段，
+不经过LLM综合处理。
+
+【返回内容】
+- entities：检索到的知识图谱实体列表（包含名称、类型、描述）
+- relations：实体间关系列表（包含关系描述）
+- chunks：文本片段列表（包含原文和出处）
+
+【使用场景】
+- Agent需要对原始数据进行二次处理或分析
+- 构建自定义的知识整理流程
+- 获取数据后进行结构化输出或进一步推理
 """
+    input_model = RAGDataQueryInput
+
+    def get_schema_overrides(self) -> dict[str, Any]:
+        """返回中文Schema描述"""
+        return {
+            "description": self.description,
+            "input_schema": {
+                "type": "object",
+                "properties": {
+                    "query": {
+                        "type": "string",
+                        "description": "【必填】研究问题或查询主题，直接填入用户原始问题，不能为空\n例如：\"唐代有哪些道制\"、\"安史之乱的起因\""
+                    },
+                    "mode": {
+                        "type": "string",
+                        "enum": ["local", "global", "hybrid", "naive", "mix"],
+                        "description": "检索模式（与rag_query相同）：\n- mix（推荐）：融合KG和向量检索\n- hybrid：混合本地+全局\n- local：聚焦特定实体上下文\n- global：社区广域检索\n- naive：纯向量搜索"
+                    },
+                    "top_k": {
+                        "type": "integer",
+                        "default": 60,
+                        "description": "从知识图谱检索的实体/关系数量上限"
+                    },
+                    "chunk_top_k": {
+                        "type": "integer",
+                        "default": 20,
+                        "description": "从文本库检索的文档片段数量上限"
+                    }
+                },
+                "required": ["query"]
+            }
+        }
     input_model = RAGDataQueryInput
 
     def __init__(self, rag_client: LightRAGClient):
@@ -182,6 +284,12 @@ Use when you want to process the raw data yourself or need context for analysis.
     ) -> ToolResult:
         """Execute the RAG data query (no LLM)."""
         try:
+            if not arguments.query:
+                return ToolResult(
+                    output="query is required",
+                    is_error=True,
+                )
+
             result = await self.rag_client.aquery_data(
                 query=arguments.query,
                 mode=arguments.mode.value,

@@ -51,12 +51,15 @@ def query(
                 if isinstance(event, AssistantTextDelta):
                     print(event.text, end="", flush=True)
                 elif isinstance(event, ToolExecutionStarted):
-                    console.print(f"\n[cyan][[TOOL: {event.tool_name}]][/cyan]")
+                    print(f"\n[[TOOL: {event.tool_name}]]")
                 elif isinstance(event, ToolExecutionCompleted):
                     if event.is_error:
-                        console.print(f"[red][[TOOL ERROR: {event.tool_name}]][/red]")
+                        print(f"[[TOOL ERROR: {event.tool_name}]]")
+                        print(f"{event.result}")
                     else:
-                        console.print(f"[cyan][[/TOOL: {event.tool_name}]][/cyan]")
+                        print(f"[[/TOOL: {event.tool_name}]]")
+                        if event.result:
+                            print(event.result)
                 elif isinstance(event, AssistantTurnComplete):
                     console.print("\n")
         finally:
@@ -242,7 +245,6 @@ def create_graph(
 def tools() -> None:
     """List available historical research tools."""
     console.print("[bold]Historical Research Tools:[/bold]\n")
-    console.print("  kg_query     - Query knowledge graph (entity/relation/fuzzy)")
     console.print("  rag_query    - Full RAG query with LLM")
     console.print("  rag_data_query - RAG data only (no LLM)")
     console.print("  cite         - Citation and source tracing")

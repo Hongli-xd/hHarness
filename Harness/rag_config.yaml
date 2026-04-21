@@ -58,3 +58,4 @@ neo4j:
   uri: "bolt://localhost:7687"
   username: "neo4j"
   password: "00000000"
+  database: "neo4j"

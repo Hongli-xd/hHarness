@@ -3,7 +3,6 @@
 from ..agent import BaseTool, ToolExecutionContext, ToolResult, ToolRegistry
 
 from .cite_tool import CiteInput, CiteTool
-from .kg_query_tool import KGOperation, KGQueryInput, KGQueryTool
 from .rag_query_tool import (
     RAGDataQueryInput,
     RAGDataQueryTool,
@@ -18,9 +17,6 @@ __all__ = [
     "ToolExecutionContext",
     "ToolResult",
     "ToolRegistry",
-    "KGQueryTool",
-    "KGQueryInput",
-    "KGOperation",
     "CiteTool",
     "CiteInput",
     "RAGQueryTool",

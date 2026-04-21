@@ -47,11 +47,23 @@ class BaseTool(ABC):
 
     def to_api_schema(self) -> dict[str, Any]:
         """Return the tool schema for API."""
-        return {
+        schema = {
             "name": self.name,
             "description": self.description,
             "input_schema": self.input_model.model_json_schema(),
         }
+        # Allow subclasses to override schema
+        overrides = self.get_schema_overrides()
+        if overrides:
+            if "description" in overrides:
+                schema["description"] = overrides["description"]
+            if "input_schema" in overrides:
+                schema["input_schema"] = overrides["input_schema"]
+        return schema
+
+    def get_schema_overrides(self) -> dict[str, Any]:
+        """Override to provide custom schema (e.g., Chinese descriptions)."""
+        return {}
 
 
 class ToolRegistry:

@@ -88,33 +88,102 @@ class CiteInput(BaseModel):
 
 
 class CiteTool(BaseTool):
-    """Citation and Source Tracing Tool for historians.
+    """引用追踪工具 - 管理历史文献引用和来源追溯。
 
-    This tool enables the historian agent to:
-    1. INSERT citations: Tag historical claims with their KG node sources
-    2. TRACE sources: Find what evidence supports a given claim
-    3. LIST citations: View all stored citations
-    4. ANNOTATE: Add credibility annotations to claims
+该工具使历史研究Agent能够：
+1. INSERT：插入引用，将历史论断与知识图谱节点关联
+2. TRACE：追溯来源，查找支持某论断的证据
+3. LIST：列出所有已存储的引用
+4. ANNOTATE：为论断添加可信度标注
 
-    Historical narration should always cite sources. Use this tool to:
-    - Ensure claims are traceable to primary sources
-    - Track credibility levels of different sources
-    - Build up a citation database for the research
-    """
+历史叙事必须始终标注来源。使用此工具确保：
+- 所有论断都可追溯到原始文献
+- 不同来源的可信度得到追踪
+- 建立研究过程的引用数据库
+"""
 
     name = "cite"
-    description = """Manage citations and trace historical claims to their sources.
+    description = """管理历史论断的引用，追溯其文献来源。
 
-OPERATIONS:
-1. insert: Tag a historical claim with knowledge graph node citations
-2. trace: Find the sources/evidence for a given claim
-3. list: List all stored citations
-4. annotate: Add credibility annotation to a claim
+【四大操作】
+1. insert（插入）：将历史论断与知识图谱节点关联添加引用
+2. trace（追溯）：查找支持某论断的证据和来源
+3. list（列表）：查看所有已存储的引用记录
+4. annotate（标注）：为论断添加可信度等级标注
 
-Use cite when generating historical narratives to ensure all claims
-are properly sourced and traceable.
+【可信度等级】
+- 一手文献：事件同时代的原始记录
+- 二手研究：后世学者的分析研究
+- 争议性说法：学术界存在不同解读的论断
+
+【使用场景】
+- 生成历史叙事时确保论断有据可查
+- 追溯某个观点的原始文献出处
+- 追踪知识图谱中论断的可信度
 """
     input_model = CiteInput
+
+    def get_schema_overrides(self) -> dict[str, Any]:
+        """返回中文Schema描述"""
+        return {
+            "description": self.description,
+            "input_schema": {
+                "type": "object",
+                "properties": {
+                    "operation": {
+                        "type": "string",
+                        "enum": ["insert", "trace", "list", "annotate"],
+                        "description": "操作类型：\n- insert：插入引用，将论断与KG节点关联\n- trace：追溯某论断的来源证据\n- list：列出所有已存储的引用\n- annotate：为论断添加可信度标注"
+                    },
+                    "claim": {
+                        "type": "string",
+                        "description": "历史论断内容\n例如：\"唐代藩镇割据源于安史之乱\""
+                    },
+                    "kg_node_ids": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "知识图谱节点ID列表，用于insert操作\n例如：[\"entity_001\", \"relation_025\"]"
+                    },
+                    "source_entities": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "来源实体名称列表（insert/annotate时使用）\n例如：[\"旧唐书\", \"资治通鉴\"]"
+                    },
+                    "credibility": {
+                        "type": "string",
+                        "enum": ["一手文献", "二手研究", "争议性说法", "未知"],
+                        "description": "来源可信度等级：\n- 一手文献：事件同时代的第一手记录\n- 二手研究：后世学者的分析研究\n- 争议性说法：学术界有不同解读\n- 未知：无法确定可信度"
+                    },
+                    "source_type": {
+                        "type": "string",
+                        "description": "史料类型\n例如：史书、考古发现、研究论文、档案等"
+                    },
+                    "period": {
+                        "type": "string",
+                        "description": "历史时期\n例如：西汉、唐代、明代"
+                    },
+                    "notes": {
+                        "type": "string",
+                        "description": "关于此引用的补充说明\n例如：此说法存在争议，需进一步考证"
+                    },
+                    "tags": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "标签列表\n例如：[\"争议性\", \"待考证\", \"重要\"]"
+                    },
+                    "claim_id": {
+                        "type": "string",
+                        "description": "论断ID，用于trace和list操作\n当需要精确查找某条已存储的引用时使用"
+                    },
+                    "limit": {
+                        "type": "integer",
+                        "default": 20,
+                        "description": "list操作返回的最大引用数量，默认20条"
+                    }
+                },
+                "required": ["operation"]
+            }
+        }
 
     def __init__(self, annotator: CredibilityAnnotator | None = None):
         """Initialize Citation Tool.

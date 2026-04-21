@@ -154,6 +154,8 @@ def create_lightrag_from_config(
         os.environ["NEO4J_USERNAME"] = neo4j_config["username"]
     if neo4j_config.get("password"):
         os.environ["NEO4J_PASSWORD"] = neo4j_config["password"]
+    if neo4j_config.get("database"):
+        os.environ["NEO4J_DATABASE"] = neo4j_config["database"]
 
     # Create LLM client
     llm_func, llm_kwargs, model_name = create_llm_client(config)

@@ -33,6 +33,7 @@ class ApiToolUseEvent:
 
     name: str
     input: dict[str, Any]
+    tool_call_id: str = ""
 
 
 @dataclass
@@ -84,7 +85,8 @@ class AnthropicApiClient:
                         if getattr(block, "type", None) == "tool_use":
                             name = getattr(block, "name", "")
                             input_json = getattr(block, "input", "{}")
-                            yield ApiToolUseEvent(name=name, input=input_json)
+                            tool_call_id = getattr(block, "id", "")
+                            yield ApiToolUseEvent(name=name, input=input_json, tool_call_id=tool_call_id)
                     elif getattr(event, "type", None) == "message_delta":
                         stop_reason = getattr(event, "stop_reason", None)
                         yield ApiMessageCompleteEvent(
@@ -92,6 +94,7 @@ class AnthropicApiClient:
                             stop_reason=stop_reason,
                         )
         except Exception as e:
+            print(f"API ERROR: {e}", flush=True)
             raise
 
 

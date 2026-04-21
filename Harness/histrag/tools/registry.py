@@ -12,7 +12,6 @@ if TYPE_CHECKING:
     from ..agent import ToolRegistry
 
 from .cite_tool import CiteTool
-from .kg_query_tool import KGQueryTool
 from .rag_query_tool import RAGDataQueryTool, RAGQueryTool
 from .timeline_tool import TimelineTool
 from .map_location_tool import MapLocationTool
@@ -42,8 +41,6 @@ def create_historical_tool_registry(
     annotator = CredibilityAnnotator()
 
     # PRIMARY research tools - highest priority
-    # These are registered first so they appear first in the tool list
-    registry.register(KGQueryTool(rag_client, annotator))
     registry.register(CiteTool(annotator))
 
     # Secondary research tools

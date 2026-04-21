@@ -28,6 +28,7 @@ class ToolUseBlock:
     """A tool use in a message."""
     name: str
     input: dict[str, Any]
+    tool_call_id: str = ""
 
 
 class AgentEngine:
@@ -62,11 +63,16 @@ class AgentEngine:
     async def submit_message(self, prompt: str) -> AsyncIterator[Any]:
         """Submit a message and run the agent loop."""
         self._messages.append(ConversationMessage(role="user", content=prompt))
-        api_messages = self._build_api_messages()
+        # 注入原始问题作为 system message，确保 LLM 调用工具时知道要用它作为 query 参数
+        api_messages = [
+            {"role": "user", "content": f"【当前用户问题】: {prompt}\n\n调用 rag_query 或 rag_data_query 时，必须将此问题作为 query 参数传入。"}
+        ]
+        api_messages += self._build_api_messages()
         tools = self.tool_registry.to_api_schema()
 
         turn = 0
         while turn < self.max_turns:
+            print(f"=============no.{turn + 1} agent_loop:================")
             turn += 1
 
             full_response = ""
@@ -87,7 +93,7 @@ class AgentEngine:
                         yield AssistantTextDelta(text=event.text)
                     elif hasattr(event, "name") and hasattr(event, "input"):
                         # ApiToolUseEvent
-                        tool_calls.append(ToolUseBlock(name=event.name, input=event.input))
+                        tool_calls.append(ToolUseBlock(name=event.name, input=event.input, tool_call_id=event.tool_call_id))
                     elif hasattr(event, "stop_reason"):
                         pass  # Terminal event
 
@@ -118,7 +124,10 @@ class AgentEngine:
                         )
                         continue
 
-                    context = ToolExecutionContext(cwd=self.cwd)
+                    context = ToolExecutionContext(
+                        cwd=self.cwd,
+                        metadata={"original_question": prompt},
+                    )
                     try:
                         result: ToolResult = await tool.execute(parsed, context)
                         yield ToolExecutionCompleted(
@@ -131,6 +140,7 @@ class AgentEngine:
                             content=[
                                 {
                                     "type": "tool_result",
+                                    "tool_call_id": tc.tool_call_id,
                                     "name": tc.name,
                                     "content": result.output,
                                 }

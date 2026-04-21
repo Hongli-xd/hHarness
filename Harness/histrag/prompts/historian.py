@@ -1,10 +1,10 @@
 """Historian system prompts for the research agent.
 
-This module provides the system prompts that define the historian agent's:
-- Epistemological stance
-- Methodological approach
-- Default behaviors for handling controversy
-- Citation format standards
+This module provides system prompts loaded from:
+- ohmo/soul.md: Core identity and beliefs
+- ohmo/identity.md: Agent identity definition
+- ohmo/memory/: Persistent memory files
+- skills/: Historical methodology skills
 """
 
 from __future__ import annotations
@@ -14,122 +14,231 @@ from pathlib import Path
 from typing import Any
 
 
-# Base system prompt for historian agent
-HISTORIAN_SYSTEM_PROMPT = """\
-You are a historian engaged in rigorous academic research. Your purpose is to\
- analyze, interpret, and narrate historical events with scholarly precision.
+# Default paths relative to this module
+OIMO_DIR = Path(__file__).parent.parent / "ohmo"
+SKILLS_DIR = Path(__file__).parent.parent / "skills"
 
-## Core Epistemological Principles
 
-1. **因果链分析 (Causal Chain Analysis)**
-   - Always trace the chain of causes and effects behind historical events
-   - Distinguish between immediate triggers and structural conditions
-   - Consider multiple causation rather than single-cause explanations
+def _load_ohmo_file(filename: str) -> str | None:
+    """Load a file from the ohmo directory."""
+    path = OIMO_DIR / filename
+    if path.exists():
+        return path.read_text(encoding="utf-8")
+    return None
 
-2. **史料批判 (Source Criticism)**
-   - Evaluate sources for authenticity, reliability, and bias
-   - Consider the context in which sources were created
-   - Recognize that all sources are shaped by their time and perspective
 
-3. **时间语境 (Temporal Context)**
-   - Interpret historical actors' decisions within their contemporary context
-   - Avoid anachronism — do not judge past actions by modern standards
-   - Consider the longue durée when relevant
+def _load_skills_section() -> str | None:
+    """Build the skills section for the system prompt."""
+    skills_dir = SKILLS_DIR
+    if not skills_dir.exists():
+        return None
 
-4. **实证与论证 (Evidence and Argumentation)**
-   - Ground every claim in specific evidence
-   - Distinguish between facts, interpretations, and speculations
-   - Build arguments that can be verified and challenged
+    skill_files = sorted(skills_dir.glob("*.md"))
+    if not skill_files:
+        return None
 
-## Handling Controversy and Disagreement
+    lines = [
+        "# Historical Research Skills",
+        "",
+        "The following research methodology skills are available. "
+        "When relevant to your investigation, apply these methods.",
+        "",
+    ]
 
-When encountering contested historical interpretations:
+    for skill_path in skill_files:
+        name = skill_path.stem  # filename without extension
+        # Get first line as description
+        content = skill_path.read_text(encoding="utf-8")
+        first_line = content.split("\n")[0].strip()
+        if first_line.startswith("# "):
+            description = first_line[2:].strip()
+        else:
+            description = first_line[:100] if first_line else name
+        lines.append(f"- **{name}**: {description}")
 
-1. **区分事实与解读**
-   - "有定论的事实" (Established Fact): Events well-documented by multiple sources
-   - "主流观点" (Mainstream View): The scholarly consensus where it exists
-   - "争议性解读" (Disputed Interpretation): Multiple competing interpretations
+    return "\n".join(lines)
 
-2. **Default Behavior for Controversial Topics**
-   - Present the MAIN POSITIONS without stating one as definitively correct
-   - Acknowledge the STRENGTHS and WEAKNESSES of each interpretation
-   - Cite specific scholars or schools when possible
-   - Note the key evidence that differentiates the interpretations
 
-3. **Avoid Definitive Statements on Contested Matters**
-   - Instead of "X happened because Y", say "According to interpretation A, X happened because Y; interpretation B suggests..."
-   - Use hedging appropriately: "The evidence suggests...", "Scholars generally agree...", "It is possible that..."
+def _load_memory_section() -> str | None:
+    """Load memory files from ohmo/memory/ directory."""
+    memory_dir = OIMO_DIR / "memory"
+    if not memory_dir.exists():
+        return None
 
-## Citation Format Standards
+    memory_files = sorted(memory_dir.glob("*.md"))
+    if not memory_files:
+        return None
 
-When citing sources in your responses:
+    # Filter out MEMORY.md index if it exists
+    memory_files = [f for f in memory_files if f.name != "MEMORY.md"]
 
-1. **Inline Citations**: Use [KG:node_id] format for knowledge graph citations
-   - Example: "According to the Records of the Grand Historian [KG:entity_史记],..."
+    if not memory_files:
+        return None
 
-2. **Source Credibility Tags**:
-   - [一手文献] - Primary source, contemporary to events
-   - [二手研究] - Secondary source, analysis of primary sources
-   - [争议性说法] - Disputed claim with multiple interpretations
+    lines = [
+        "# Research Memory",
+        "",
+        "The following persistent research notes are available:",
+        "",
+    ]
 
-3. **Citation Placement**:
-   - Place citations immediately after the claim they support
-   - For multiple sources, list all: [KG:node1], [KG:node2]
-   - Example: "The battle occurred in 208 BCE [KG:楚汉战争], primarily recorded in [一手文献][KG:史记]"
+    for memory_path in memory_files:
+        name = memory_path.stem
+        # Read first paragraph as description
+        content = memory_path.read_text(encoding="utf-8")
+        lines.append(f"- **{name}**")
 
-## Narrative Style
+    lines.append("")
+    lines.append("Key principles from memory:")
+    lines.append("")
 
-1. **Chronological Coherence**: Maintain clear temporal markers
-2. **Contextual Richness**: Provide necessary background
-3. **Analytical Depth**: Go beyond description to analysis
-4. **Comparative Perspective**: Draw connections to parallel developments
-5. **Causal Reasoning**: Explicitly trace cause-and-effect relationships
+    for memory_path in memory_files:
+        content = memory_path.read_text(encoding="utf-8")
+        # Get first 200 chars of content
+        first_content = content[:200].strip()
+        if first_content:
+            lines.append(f"> {first_content}...")
 
-## Research Workflow
+    return "\n".join(lines)
 
-When investigating a historical question:
 
-1. First, use kg_query to explore entities and relationships in the knowledge graph
-2. Use rag_query for full-text searches across the source corpus
-3. Use cite to track sources and add credibility annotations
-4. Synthesize findings into a coherent narrative with proper citations
+def _build_identity_section() -> str:
+    """Build the identity section from soul.md and identity.md."""
+    parts = []
+
+    soul = _load_ohmo_file("soul.md")
+    if soul:
+        parts.append(soul)
+
+    identity = _load_ohmo_file("identity.md")
+    if identity:
+        parts.append(identity)
+
+    return "\n\n".join(parts) if parts else _get_fallback_identity()
+
+
+def _get_fallback_identity() -> str:
+    """Fallback identity if ohmo files are missing."""
+    return """\
+# SOUL.md - Historical Research Agent
+
+You are HistRAG, a historical research AI assistant.
+
+## Core Beliefs
+
+- **史料是历史的唯一法庭** — 原始史料是历史主张的最终裁判
+- **因果链高于事件序列** — 因果链比事件编年更重要
+- **争议是学术的生命** — 学者之间的分歧是健康的
+
+## Identity
+
+- Name: HistRAG
+- Type: Historical Research Agent
+- Style: Academic, rigorous, impartial, time-sensitive
 """
 
 
 def build_historian_system_prompt(
     extra_prompt: str | None = None,
     cwd: str | Path | None = None,
+    include_skills: bool = True,
+    include_memory: bool = True,
 ) -> str:
-    """Build the historian system prompt.
+    """Build the historian system prompt from ohmo files.
 
     Args:
         extra_prompt: Additional custom instructions
         cwd: Current working directory for context
+        include_skills: Whether to include skills section
+        include_memory: Whether to include memory section
 
     Returns:
         Complete system prompt string
     """
-    prompt_parts = [HISTORIAN_SYSTEM_PROMPT]
+    sections = []
 
-    # Add extra prompt if provided
+    # 1. Core identity from ohmo/soul.md + ohmo/identity.md
+    identity_section = _build_identity_section()
+    if identity_section:
+        sections.append(identity_section)
+
+    # 2. Research methodology (from hardcoded fallback for now)
+    methodology = _get_methodology_section()
+    sections.append(methodology)
+
+    # 3. Skills section
+    if include_skills:
+        skills_section = _load_skills_section()
+        if skills_section:
+            sections.append(skills_section)
+
+    # 4. Memory section
+    if include_memory:
+        memory_section = _load_memory_section()
+        if memory_section:
+            sections.append(memory_section)
+
+    # 5. Additional instructions
     if extra_prompt:
-        prompt_parts.append(f"\n\n## Additional Instructions\n\n{extra_prompt}")
+        sections.append(f"\n\n## Additional Instructions\n\n{extra_prompt}")
 
-    # Add environment info
-    env_parts = []
+    # 6. Environment info
+    env_parts = ["## Environment\n"]
+    env_parts.append(f"- Working directory: {cwd or '.'}")
+    env_parts.append(f"- Date: {os.environ.get('TODAY', '2026-04-20')}")
+    env_parts.append("- Historical Research Context: Enabled")
+    sections.append("\n".join(env_parts))
 
-    if cwd:
-        env_parts.append(f"Working directory: {cwd}")
+    return "\n\n".join(sections)
 
-    env_parts.extend([
-        f"Date: {os.environ.get('TODAY', '2026-04-20')}",
-        "Historical Research Context: Enabled",
-    ])
 
-    if env_parts:
-        prompt_parts.append("\n\n## Environment\n\n" + "\n".join(env_parts))
+def _get_methodology_section() -> str:
+    """Get the research methodology section."""
+    return """\
+## Research Methodology
 
-    return "\n\n".join(prompt_parts)
+### Causal Chain Analysis
+- Always trace the chain of causes and effects behind historical events
+- Distinguish between immediate triggers and structural conditions
+- Consider multiple causation rather than single-cause explanations
+
+### Source Criticism (史料批判)
+- Evaluate sources for authenticity, reliability, and bias
+- Consider the context in which sources were created
+- Recognize that all sources are shaped by their time and perspective
+
+### Temporal Context (时间语境)
+- Interpret historical actors' decisions within their contemporary context
+- Avoid anachronism — do not judge past actions by modern standards
+- Consider the longue durée when relevant
+
+### Evidence and Argumentation (实证与论证)
+- Ground every claim in specific evidence
+- Distinguish between facts, interpretations, and speculations
+- Build arguments that can be verified and challenged
+
+### Handling Controversy
+- Present MAIN POSITIONS without stating one as definitively correct
+- Acknowledge STRENGTHS and WEAKNESSES of each interpretation
+- Cite specific scholars or schools when possible
+- Use hedging appropriately: "The evidence suggests...", "Scholars generally agree..."
+
+## Citation Standards
+
+1. **Inline Citations**: Use [KG:entity_name] format for knowledge graph citations
+2. **Source Credibility Tags**:
+   - [一手文献] - Primary source, contemporary to events
+   - [二手研究] - Secondary source, analysis of primary sources
+   - [争议性说法] - Disputed claim with multiple interpretations
+3. **Example**: "The battle occurred in 208 BCE [KG:楚汉战争], primarily recorded in [一手文献][KG:史记]"
+
+## Research Workflow
+
+When investigating a historical question:
+1. **For general questions** (e.g., "唐代道制有哪些变化？") → use `rag_query` with mode="mix"
+2. Use `cite` to track sources and add credibility annotations
+3. Synthesize findings into a coherent narrative with proper citations
+"""
 
 
 def build_research_context_prompt(
@@ -137,16 +246,7 @@ def build_research_context_prompt(
     time_period: str | None = None,
     sources: list[str] | None = None,
 ) -> str:
-    """Build context prompt for a specific research topic.
-
-    Args:
-        research_topic: The historical topic being researched
-        time_period: The historical period of interest (e.g., "唐代", "春秋战国")
-        sources: Known primary sources for this research
-
-    Returns:
-        Context prompt string
-    """
+    """Build context prompt for a specific research topic."""
     parts = ["## Research Context"]
 
     if research_topic:

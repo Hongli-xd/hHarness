@@ -81,6 +81,13 @@ class LightRAGClient:
             EntityInfo with all entity attributes
         """
         data = await self._rag.get_entity_info(entity_name, include_vector_data)
+        if data is None or data.get("graph_data") is None:
+            # Entity not found - return placeholder
+            return EntityInfo.from_dict({
+                "entity_name": entity_name,
+                "entity_type": "未知",
+                "description": f"未在知识图谱中找到实体：{entity_name}",
+            })
         return EntityInfo.from_dict(data)
 
     async def get_relation_info(
