@@ -116,6 +116,9 @@ class AgentEngine:
                         continue
 
                     try:
+                        # Fallback: if query is None, use prompt (defensive guard)
+                        if tc.input.get("query") is None:
+                            tc.input["query"] = prompt
                         parsed = tool.input_model.model_validate(tc.input)
                     except Exception as e:
                         yield ToolExecutionCompleted(

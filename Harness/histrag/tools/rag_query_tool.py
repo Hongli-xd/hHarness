@@ -29,8 +29,7 @@ class RAGMode(str, Enum):
 class RAGQueryInput(BaseModel):
     """Input schema for the RAG Query Tool."""
 
-    query: str | None = Field(
-        default=None,
+    query: str = Field(
         description="Research question or topic to query"
     )
     mode: RAGMode = Field(
@@ -162,8 +161,7 @@ LLM生成的回答文本，附带源文档片段的引用和出处信息
 class RAGDataQueryInput(BaseModel):
     """Input schema for RAG data-only query (no LLM generation)."""
 
-    query: str | None = Field(
-        default=None,
+    query: str = Field(
         description="Research question or topic"
     )
     mode: RAGMode = Field(
