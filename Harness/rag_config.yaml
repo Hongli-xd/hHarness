@@ -9,17 +9,19 @@ llm:
   model_name: "MiniMax-M2.7"
   api_key: "sk-cp-HT93UTSKgpBYKYbEhTrU2JlSVEFO_6SEXNjQYTYCGZXwhPRCFn9WBt2NEGU9ZIBu7nJqKK3c1oCgBEPH_P7xBM0b9RoedCYi1wq4Q-cUjMYG-gD0NUSH97U"
   base_url: "https://api.minimaxi.com/anthropic"
-  max_tokens: 128000
+  max_tokens: 64000
   summary_max_tokens: 50000
-  max_async: 7
+  max_async: 3
   timeout: 900
 
 embedding:
   model: Qwen/Qwen3-Embedding-4B
-  dimension: 2048
+  dimension: 1024
   max_token_size: 8192
   api_key: "sk-9Gmai1GrqiY5up0xiChBspADCuwWbV9k73Eg7Zqj5FBiKpC7"
   base_url: https://api.xiaocaseai.com/v1
+  batch_size: 5
+  
 
 
 # Storage Configuration
@@ -46,6 +48,10 @@ chunking:
 cache:
   enable_llm_cache: true
   enable_llm_cache_for_entity_extract: true
+
+# Merge Configuration
+merge:
+  force_llm_summary_on_merge: 17  # 描述数<=16直接拼接，>16调用LLM合并
 
 # Neo4j Configuration
 neo4j:

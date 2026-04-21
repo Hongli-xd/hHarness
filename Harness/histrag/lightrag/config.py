@@ -170,6 +170,8 @@ def create_lightrag_from_config(
         llm_model_kwargs=llm_kwargs,
         llm_model_max_async=config.get("llm", {}).get("max_async", 2),
         default_llm_timeout=config.get("llm", {}).get("timeout", 600),
+        # Embedding
+        embedding_batch_num=config.get("embedding", {}).get("batch_size", 5),
         # Storage
         kv_storage=config.get("storage", {}).get("kv_storage", "JsonKVStorage"),
         vector_storage=config.get("storage", {}).get("vector_storage", "NanoVectorDBStorage"),
@@ -187,6 +189,8 @@ def create_lightrag_from_config(
         # Cache
         enable_llm_cache=config.get("cache", {}).get("enable_llm_cache", True),
         enable_llm_cache_for_entity_extract=config.get("cache", {}).get("enable_llm_cache_for_entity_extract", True),
+        # Entity/Relation merge
+        force_llm_summary_on_merge=config.get("merge", {}).get("force_llm_summary_on_merge", 17),
     )
 
     return rag, config
