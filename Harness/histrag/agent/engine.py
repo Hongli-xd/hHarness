@@ -143,7 +143,7 @@ class AgentEngine:
                                 content=f"[工具错误] {result.output}",
                             ))
                         else:
-                            # Store assistant message with tool_use blocks FIRST (required by API)
+                            # Store assistant message with tool_use (required for MiniMax to track tool calls)
                             self._messages.append(ConversationMessage(
                                 role="assistant",
                                 content=[
@@ -155,14 +155,13 @@ class AgentEngine:
                                     }
                                 ],
                             ))
-                            # Then store user message with tool_result
+                            # Store user message with tool_result
                             self._messages.append(ConversationMessage(
                                 role="user",
                                 content=[
                                     {
                                         "type": "tool_result",
                                         "tool_use_id": tc.tool_call_id,
-                                        "name": tc.name,
                                         "content": result.output,
                                     }
                                 ],
@@ -198,19 +197,25 @@ class AgentEngine:
                 for item in msg.content:
                     if isinstance(item, dict):
                         if item.get("type") == "tool_result":
-                            tool_id = item.get("tool_call_id", "")
+                            # Use tool_use_id (not tool_call_id) - matches how we stored it
+                            tool_id = item.get("tool_use_id", "")
                             print(f"[DEBUG] tool_result tool_use_id: {tool_id}", flush=True)
                             api_content.append({
                                 "type": "tool_result",
                                 "tool_use_id": tool_id,
                                 "content": item["content"],
                             })
-                        # Skip other block types (text, tool_use) as they're not needed in API format
-                        # The API only needs tool_result blocks in subsequent turns
-                    # Handle dataclass blocks from API responses (e.g., from api_client.stream_message)
+                        elif item.get("type") == "tool_use":
+                            # MiniMax API needs tool_use id to be preserved
+                            api_content.append({
+                                "type": "tool_use",
+                                "id": item.get("id", ""),
+                                "name": item.get("name", ""),
+                                "input": item.get("input", {}),
+                            })
                     elif hasattr(item, "type"):
                         if item.type == "tool_result":
-                            tool_id = getattr(item, "tool_use_id", "placeholder")
+                            tool_id = getattr(item, "tool_use_id", "")
                             content = getattr(item, "content", str(item))
                             if isinstance(content, str):
                                 api_content.append({
@@ -218,6 +223,13 @@ class AgentEngine:
                                     "tool_use_id": tool_id,
                                     "content": content,
                                 })
+                        elif item.type == "tool_use":
+                            api_content.append({
+                                "type": "tool_use",
+                                "id": getattr(item, "id", ""),
+                                "name": getattr(item, "name", ""),
+                                "input": getattr(item, "input", {}),
+                            })
                 if api_content:
                     messages.append({"role": msg.role, "content": api_content})
         print(f"[DEBUG] _build_api_messages: {messages}", flush=True)
