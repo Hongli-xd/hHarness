@@ -176,3 +176,46 @@ INFO: Chunks appended from relation: `于禁`
 INFO: Chunks appended from relation: `庞德`
 INFO: Chunks appended from relation: `元帝`
 INFO: Chunks appended from relation: `诸葛亮`
+
+
+修复前后对比
+之前（错误的逻辑）
+假设模型返回：
+
+
+assistant: [tool_use: get_weather, text: "Let me check..."]
+然后 tool 执行返回结果。
+
+之前 _build_api_messages 会这样处理：
+
+
+# _messages 里有 2 条记录：
+ConversationMessage(role="assistant", content="Let me check...")  # ← 只有 text，tool_use 丢失！
+ConversationMessage(role="user", content="[tool_result: 24℃]")  # ← 独立一条消息
+
+# 构建的 api_messages：
+[
+  {"role": "user", "content": "How's weather?"},
+  {"role": "assistant", "content": "Let me check..."},  # ← 没有 tool_use 模型怎么知道要调用工具？
+  {"role": "user", "content": "[tool_result: 24℃]"},
+]
+问题：模型看不到 tool_use 块，不知道之前要调用工具的决策过程。
+
+现在（正确的逻辑）
+
+# _messages 里有 2 条记录：
+ConversationMessage(role="assistant", content=[
+    {"type": "text", "text": "Let me check..."},
+    {"type": "tool_use", "name": "get_weather", "input": {...}}
+])
+ConversationMessage(role="user", content=[
+    {"type": "tool_result", "tool_use_id": "...", "content": "24℃"}
+])
+
+# 构建的 api_messages：
+[
+  {"role": "user", "content": "How's weather?"},
+  {"role": "assistant", "content": "Let me check..."},  # ← 简化的 assistant 消息
+  {"role": "user", "content": [{"type": "tool_result", ...}]},  # ← tool_result 合并到这里
+]
+API 只需要知道：assistant 说了啥 + tool 返回了啥，不需要重复发送 tool_use 声明。

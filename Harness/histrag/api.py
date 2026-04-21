@@ -71,28 +71,65 @@ class AnthropicApiClient:
         if request.tools:
             params["tools"] = request.tools
 
+        # Map tool_call_id -> partial JSON from input_json events
+        pending_tool_inputs: dict[str, str] = {}
+        # Most recently seen tool_call_id (set during content_block_start of tool_use)
+        last_tool_call_id: str | None = None
+
         try:
             async with self._client.messages.stream(**params) as stream:
                 async for event in stream:
-                    if getattr(event, "type", None) == "content_block_delta":
+                    event_type = getattr(event, "type", None)
+
+                    if event_type == "content_block_delta":
                         delta = getattr(event, "delta", None)
-                        if getattr(delta, "type", None) == "text_delta":
+                        delta_type = getattr(delta, "type", None)
+                        if delta_type == "text_delta":
                             text = getattr(delta, "text", "")
                             if text:
                                 yield ApiTextDeltaEvent(text=text)
-                    elif getattr(event, "type", None) == "content_block_start":
+
+                    elif event_type == "input_json":
+                        # MiniMax: InputJsonEvent with partial_json and snapshot
+                        # The tool_call_id may be empty, so we track via last_tool_call_id
+                        partial = getattr(event, "partial_json", "")
+                        tool_call_id = getattr(event, "tool_call_id", "") or last_tool_call_id or ""
+                        if tool_call_id and partial:
+                            pending_tool_inputs[tool_call_id] = partial
+                            print(f"[DEBUG] input_json: tool_call_id={tool_call_id}, partial={partial}", flush=True)
+
+                    elif event_type == "content_block_start":
                         block = getattr(event, "content_block", None)
                         if getattr(block, "type", None) == "tool_use":
-                            name = getattr(block, "name", "")
-                            input_json = getattr(block, "input", "{}")
+                            last_tool_call_id = getattr(block, "id", "")
+                            print(f"[DEBUG] content_block_start tool_use: id={last_tool_call_id}", flush=True)
+                        elif getattr(block, "type", None) == "text":
+                            last_tool_call_id = None  # Reset on non-tool blocks
+
+                    elif event_type == "content_block_stop":
+                        block = getattr(event, "content_block", None)
+                        if getattr(block, "type", None) == "tool_use":
                             tool_call_id = getattr(block, "id", "")
+                            name = getattr(block, "name", "")
+                            input_json = getattr(block, "input", {})
+                            # Override with buffered partial if it has more complete data
+                            if tool_call_id in pending_tool_inputs:
+                                try:
+                                    import json
+                                    buffered = json.loads(pending_tool_inputs[tool_call_id])
+                                    # Merge: buffered takes precedence if it has actual values
+                                    if buffered.get("query") is not None:
+                                        input_json = buffered
+                                except Exception:
+                                    pass
+                                del pending_tool_inputs[tool_call_id]
+                            print(f"[DEBUG] content_block_stop tool_use: id={tool_call_id}, name={name}, input={input_json}", flush=True)
                             yield ApiToolUseEvent(name=name, input=input_json, tool_call_id=tool_call_id)
-                    elif getattr(event, "type", None) == "message_delta":
+
+                    elif event_type == "message_delta":
                         stop_reason = getattr(event, "stop_reason", None)
-                        yield ApiMessageCompleteEvent(
-                            content="",
-                            stop_reason=stop_reason,
-                        )
+                        yield ApiMessageCompleteEvent(content="", stop_reason=stop_reason)
+
         except Exception as e:
             print(f"API ERROR: {e}", flush=True)
             raise

@@ -20,7 +20,7 @@ from .tools import ToolExecutionContext, ToolRegistry, ToolResult
 class ConversationMessage:
     """A message with potential tool calls."""
     role: str
-    content: Any  # str or list of tool calls
+    content: Any  # str or list of content blocks (text, tool_use, tool_result)
 
 
 @dataclass
@@ -62,13 +62,11 @@ class AgentEngine:
 
     async def submit_message(self, prompt: str) -> AsyncIterator[Any]:
         """Submit a message and run the agent loop."""
+        print(f"prompt:{prompt}")
         self._messages.append(ConversationMessage(role="user", content=prompt))
-        # 注入原始问题作为 system message，确保 LLM 调用工具时知道要用它作为 query 参数
-        api_messages = [
-            {"role": "user", "content": f"【当前用户问题】: {prompt}\n\n调用 rag_query 或 rag_data_query 时，必须将此问题作为 query 参数传入。"}
-        ]
-        api_messages += self._build_api_messages()
+        api_messages = self._build_api_messages()
         tools = self.tool_registry.to_api_schema()
+        # print(f"[DEBUG] rag_query tool schema: {[t for t in tools if t['name'] == 'rag_query']}", flush=True)
 
         turn = 0
         while turn < self.max_turns:
@@ -83,11 +81,14 @@ class AgentEngine:
                 request = ApiMessageRequest(
                     model=self.model,
                     messages=api_messages,
-                    system_prompt=self.system_prompt,
+                    system_prompt=f"{self.system_prompt}\n\n【当前用户问题】: {prompt}\n\n调用 rag_query 时必须将上述用户问题填入 query 参数。",
                     tools=tools,
                 )
+                # print(f"[DEBUG] system_prompt length: {len(self.system_prompt) if self.system_prompt else 0}", flush=True)
+                # print(f"[DEBUG] system_prompt first 200: {self.system_prompt[:200] if self.system_prompt else 'EMPTY'}", flush=True)
 
                 async for event in self.api_client.stream_message(request):
+                    #print(f"event:{event}")
                     if hasattr(event, "text"):
                         full_response += event.text
                         yield AssistantTextDelta(text=event.text)
@@ -135,17 +136,37 @@ class AgentEngine:
                             result=result.output,
                             is_error=result.is_error,
                         )
-                        self._messages.append(ConversationMessage(
-                            role="user",
-                            content=[
-                                {
-                                    "type": "tool_result",
-                                    "tool_call_id": tc.tool_call_id,
-                                    "name": tc.name,
-                                    "content": result.output,
-                                }
-                            ],
-                        ))
+                        # If tool returned error, store as plain text to avoid tool_call_id mismatch with MiniMax API
+                        if result.is_error:
+                            self._messages.append(ConversationMessage(
+                                role="user",
+                                content=f"[工具错误] {result.output}",
+                            ))
+                        else:
+                            # Store assistant message with tool_use blocks FIRST (required by API)
+                            self._messages.append(ConversationMessage(
+                                role="assistant",
+                                content=[
+                                    {
+                                        "type": "tool_use",
+                                        "id": tc.tool_call_id,
+                                        "name": tc.name,
+                                        "input": tc.input,
+                                    }
+                                ],
+                            ))
+                            # Then store user message with tool_result
+                            self._messages.append(ConversationMessage(
+                                role="user",
+                                content=[
+                                    {
+                                        "type": "tool_result",
+                                        "tool_use_id": tc.tool_call_id,
+                                        "name": tc.name,
+                                        "content": result.output,
+                                    }
+                                ],
+                            ))
                     except Exception as e:
                         yield ToolExecutionCompleted(
                             tool_name=tc.name,
@@ -154,13 +175,7 @@ class AgentEngine:
                         )
                         self._messages.append(ConversationMessage(
                             role="user",
-                            content=[
-                                {
-                                    "type": "tool_result",
-                                    "name": tc.name,
-                                    "content": f"Error: {e}",
-                                }
-                            ],
+                            content=f"[工具执行错误] {e}",
                         ))
 
                 api_messages = self._build_api_messages()
@@ -178,18 +193,34 @@ class AgentEngine:
             if isinstance(msg.content, str):
                 messages.append({"role": msg.role, "content": msg.content})
             else:
+                # msg.content is a list of content blocks (text, tool_use, tool_result)
+                api_content = []
                 for item in msg.content:
-                    if isinstance(item, dict) and item.get("type") == "tool_result":
-                        messages.append({
-                            "role": "user",
-                            "content": [
-                                {
+                    if isinstance(item, dict):
+                        if item.get("type") == "tool_result":
+                            tool_id = item.get("tool_call_id", "")
+                            print(f"[DEBUG] tool_result tool_use_id: {tool_id}", flush=True)
+                            api_content.append({
+                                "type": "tool_result",
+                                "tool_use_id": tool_id,
+                                "content": item["content"],
+                            })
+                        # Skip other block types (text, tool_use) as they're not needed in API format
+                        # The API only needs tool_result blocks in subsequent turns
+                    # Handle dataclass blocks from API responses (e.g., from api_client.stream_message)
+                    elif hasattr(item, "type"):
+                        if item.type == "tool_result":
+                            tool_id = getattr(item, "tool_use_id", "placeholder")
+                            content = getattr(item, "content", str(item))
+                            if isinstance(content, str):
+                                api_content.append({
                                     "type": "tool_result",
-                                    "tool_use_id": "placeholder",
-                                    "content": item["content"],
-                                }
-                            ],
-                        })
+                                    "tool_use_id": tool_id,
+                                    "content": content,
+                                })
+                if api_content:
+                    messages.append({"role": msg.role, "content": api_content})
+        print(f"[DEBUG] _build_api_messages: {messages}", flush=True)
         return messages
 
 

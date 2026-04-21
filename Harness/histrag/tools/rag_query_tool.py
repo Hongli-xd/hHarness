@@ -102,36 +102,6 @@ LLM生成的回答文本，附带源文档片段的引用和出处信息
         """返回中文Schema描述"""
         return {
             "description": self.description,
-            "input_schema": {
-                "type": "object",
-                "properties": {
-                    "query": {
-                        "type": "string",
-                        "description": "【必填】研究问题或查询主题，直接填入用户原始问题，不能为空\n例如：\"唐代藩镇割据的原因和影响\"、\"贞观之治的政治制度\""
-                    },
-                    "mode": {
-                        "type": "string",
-                        "enum": ["local", "global", "hybrid", "naive", "mix"],
-                        "description": "检索模式：\n- mix（推荐）：融合KG和向量检索重排序，均衡效果好\n- hybrid：混合本地+全局检索\n- local：聚焦特定实体上下文，精准但窄\n- global：社区广域检索，适合宏观问题\n- naive：纯向量搜索，速度快但忽略图结构"
-                    },
-                    "top_k": {
-                        "type": "integer",
-                        "default": 60,
-                        "description": "从知识图谱检索的实体/关系数量上限，默认60条"
-                    },
-                    "chunk_top_k": {
-                        "type": "integer",
-                        "default": 20,
-                        "description": "从文本库检索的文档片段数量上限，默认20条"
-                    },
-                    "stream": {
-                        "type": "boolean",
-                        "default": False,
-                        "description": "是否流式输出回答，True则边生成边打印"
-                    }
-                },
-                "required": ["query"]
-            }
         }
 
     def __init__(self, rag_client: LightRAGClient):
@@ -152,14 +122,18 @@ LLM生成的回答文本，附带源文档片段的引用和出处信息
     ) -> ToolResult:
         """Execute the RAG query."""
         try:
-            if not arguments.query:
+            # Fallback to original_question if query not provided
+            query = arguments.query
+            if not query:
+                query = context.metadata.get("original_question")
+            if not query or query is None:
                 return ToolResult(
                     output="query is required",
                     is_error=True,
                 )
 
             result = await self.rag_client.aquery(
-                query=arguments.query,
+                query=str(query),
                 mode=arguments.mode.value,
                 top_k=arguments.top_k,
                 chunk_top_k=arguments.chunk_top_k,
@@ -284,7 +258,10 @@ class RAGDataQueryTool(BaseTool):
     ) -> ToolResult:
         """Execute the RAG data query (no LLM)."""
         try:
-            if not arguments.query:
+            query = arguments.query
+            if not query:
+                query = context.metadata.get("original_question")
+            if not query:
                 return ToolResult(
                     output="query is required",
                     is_error=True,
