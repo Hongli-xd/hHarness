@@ -252,13 +252,9 @@ let selIdx = -1;
 let highlighted = new Set();
 
 // ── Cesium 初始化 ────────────────────────────────────────────
-Cesium.Ion.defaultAccessToken = '';  // 不使用 Ion
-
 const viewer = new Cesium.Viewer('cesiumContainer', {{
-  imageryProvider: Cesium.createWorldImagery(),
-  terrainProvider: Cesium.createWorldTerrain(),
-  animation: false,
   baseLayerPicker: false,
+  animation: false,
   fullscreenButton: false,
   geocoder: false,
   homeButton: false,
@@ -269,6 +265,12 @@ const viewer = new Cesium.Viewer('cesiumContainer', {{
   navigationHelpButton: false,
   navigationInstructionsInitiallyVisible: false,
 }});
+
+// 启用地形 (使用 ArcGis 在线 terrain)
+const terrainProvider = new Cesium.ArcGISTiledElevationTerrainProvider({{
+  url: 'https://elevation3d.arcgisonline.com/arcgis/rest/services/WorldElevation3D/Terrain3D/ImageServer',
+}});
+viewer.scene.terrainProvider = terrainProvider;
 
 // 防止渲染错误导致崩溃
 viewer.scene.maximumRenderTimeChange = Infinity;
@@ -282,19 +284,25 @@ try {{
   ));
 }} catch(e) {{ console.warn('国界线加载失败:', e); }}
 
-// 叠加中国省界（简化版，减少顶点数）
+// 叠加中国省界（简化多边形，减少顶点数避免崩溃）
 try {{
-  Cesium.GeoJsonDataSource.load(
-    'https://geo.datav.aliyun.com/areas_v3/bound/100000_full.json',
-    {{ stroke: Cesium.Color.fromCssColorString('#c0392b'), fill: Cesium.Color.TRANSPARENT, strokeWidth: 0.5 }}
-  ).then(ds => {{
-    // 简化每个省的 polygon，减少渲染负担
+  Promise.all([
+    Cesium.GeoJsonDataSource.load(
+      'https://geo.datav.aliyun.com/areas_v3/bound/100000_full.json',
+      {{ stroke: Cesium.Color.fromCssColorString('#c0392b'), fill: Cesium.Color.TRANSPARENT, strokeWidth: 0.5 }}
+    )
+  ]).then(results => {{
+    const ds = results[0];
+    // 简化每个省的 polygon，顶点数超过阈值就跳过
     ds.entities.values.forEach(entity => {{
-      if (entity.polygon) {{
-        entity.polygon.extrudedHeight = undefined;
-        entity.polygon.perPositionHeight = false;
-        entity.polygon.closeTop = false;
-        entity.polygon.closeBottom = false;
+      if (entity.polygon && entity.polygon.hierarchy) {{
+        try {{
+          const hierarchy = entity.polygon.hierarchy.getValue();
+          if (hierarchy && hierarchy.positions && hierarchy.positions.length > 200) {{
+            // 顶点过多，跳过此省
+            entity.show = false;
+          }}
+        }} catch(e) {{}}
       }}
     }});
     viewer.dataSources.add(ds);

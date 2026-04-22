@@ -510,6 +510,7 @@ body::before {
   flex: 2; display: flex; flex-direction: column; overflow: hidden;
   border-right: 1px solid var(--border);
   background: var(--paper);
+  position: relative; /* 让 zoom 控制条能正确定位 */
 }
 
 #tl-header {
@@ -583,36 +584,189 @@ body::before {
 /* 时间轴内部样式 */
 #timeline-inner {
   flex: 1; overflow-y: auto; overflow-x: hidden;
-  padding: 10px 8px;
+  position: relative;
+  display: flex; flex-direction: column;
 }
-#timeline-track {
-  position: relative; min-height: 100%; display: flex;
-  flex-direction: column; gap: 0;
+
+/* 时间轴容器 - 可缩放 */
+#timeline-container {
+  position: relative;
+  flex: 1; /* 占满剩余空间 */
+  transition: height 0.15s ease-out;
 }
+
+/* 中心轴线 */
 #timeline-axis {
-  position: absolute; left: 50%; top: 0; bottom: 0; width: 1px;
-  background: var(--border-mid); transform: translateX(-50%);
+  position: absolute;
+  left: 50%; top: 0; bottom: 0;
+  width: 2px;
+  background: linear-gradient(to bottom, transparent, var(--vermilion-d) 10%, var(--vermilion-d) 90%, transparent);
+  transform: translateX(-50%);
 }
-.tl-item {
-  display: flex; align-items: center; min-height: 36px;
-  padding: 0 6px; cursor: pointer;
+
+/* 时间刻度线 */
+.tl-tick {
+  position: absolute;
+  left: 50%; transform: translateX(-50%);
+  display: flex; flex-direction: column; align-items: center;
 }
-.tl-item:hover { background: var(--paper-dark); }
-.tl-item.sel { background: var(--paper-deep); }
-.tl-year {
+.tl-tick-line {
+  width: 20px; height: 1px;
+  background: var(--border-mid);
+}
+.tl-tick-label {
   font-family: var(--font-ui); font-size: 10px; color: var(--ink-ghost);
-  min-width: 32px; text-align: center; flex-shrink: 0;
+  margin-top: 2px; white-space: nowrap;
 }
-.tl-dot {
-  width: 8px; height: 8px; border-radius: 50%;
-  border: 1.5px solid var(--paper); flex-shrink: 0;
-  margin: 0 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+
+/* 事件节点 */
+.tl-event {
+  position: absolute;
+  left: 50%; transform: translateX(-50%);
+  display: flex; flex-direction: column; align-items: center;
+  cursor: pointer; transition: transform 0.15s;
 }
-.tl-label {
+.tl-event:hover { transform: translateX(-50%) scale(1.05); }
+.tl-event.sel .tl-dot { box-shadow: 0 0 0 3px var(--celadon-l); }
+.tl-event-dot {
+  width: 14px; height: 14px; border-radius: 50%;
+  border: 2px solid var(--paper);
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  z-index: 1;
+}
+.tl-event-label {
+  position: absolute;
+  left: calc(50% + 12px);
+  white-space: nowrap; max-width: 80px;
+  overflow: hidden; text-overflow: ellipsis;
   font-family: var(--font-body); font-size: 11px; color: var(--ink-mid);
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  background: var(--paper);
+  padding: 2px 4px;
 }
-.tl-item.sel .tl-label { color: var(--ink); font-weight: 500; }
+.tl-event-label.left {
+  left: auto; right: calc(50% + 12px);
+  text-align: right;
+}
+.tl-event-year {
+  font-family: var(--font-ui); font-size: 9px; color: var(--ink-ghost);
+  margin-top: 2px;
+}
+
+/* 缩放控制条 - 放在 timeline-inner 内部底部 */
+#timeline-zoom {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 8px 12px;
+  background: var(--paper-dark);
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+}
+#timeline-zoom span { font-size: 10px; color: var(--ink-ghost); }
+#zoom-slider {
+  width: 80px; height: 4px;
+  -webkit-appearance: none; appearance: none;
+  background: var(--paper-deep); border-radius: 2px; outline: none;
+}
+#zoom-slider::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none;
+  width: 12px; height: 12px; border-radius: 50%;
+  background: var(--vermilion-d); cursor: pointer;
+}
+
+/* 时间轴事件详情浮层 */
+#event-detail {
+  position: fixed;
+  display: none;
+  width: 280px;
+  background: var(--paper);
+  border: 1px solid var(--border-mid);
+  border-radius: 8px;
+  box-shadow: 0 8px 32px var(--shadow-deep), 0 2px 8px var(--shadow);
+  z-index: 1000;
+  overflow: hidden;
+  animation: fadeInUp 0.25s ease-out;
+}
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+#event-detail.show { display: block; }
+.ed-header {
+  padding: 12px 16px;
+  background: var(--ink);
+  display: flex; align-items: center; gap: 10px;
+}
+.ed-dot {
+  width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0;
+  border: 2px solid rgba(255,255,255,0.3);
+}
+.ed-title {
+  flex: 1;
+  font-family: var(--font-serif);
+  font-size: 14px; font-weight: 600;
+  color: var(--paper);
+  letter-spacing: 0.5px;
+}
+.ed-year {
+  font-family: var(--font-ui);
+  font-size: 12px; color: var(--gold);
+  flex-shrink: 0;
+}
+.ed-body {
+  padding: 14px 16px;
+}
+.ed-desc {
+  font-family: var(--font-body);
+  font-size: 13px; line-height: 1.8;
+  color: var(--ink-mid);
+  margin-bottom: 12px;
+}
+.ed-meta {
+  display: flex; flex-direction: column; gap: 8px;
+}
+.ed-meta-item {
+  display: flex; align-items: flex-start; gap: 8px;
+}
+.ed-meta-label {
+  font-family: var(--font-ui);
+  font-size: 10px; color: var(--ink-ghost);
+  text-transform: uppercase; letter-spacing: 1px;
+  min-width: 40px;
+  padding-top: 2px;
+}
+.ed-meta-value {
+  font-family: var(--font-body);
+  font-size: 12px; color: var(--ink-mid);
+}
+.ed-cat-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-family: var(--font-ui);
+  font-size: 10px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.5px;
+}
+.ed-cat-badge.mil { background: #EEEDFE; color: #3C3489; }
+.ed-cat-badge.pol { background: #E1F5EE; color: #085041; }
+.ed-cat-badge.eco { background: #FAEEDA; color: #633806; }
+.ed-cat-badge.nat { background: #FAECE7; color: #712B13; }
+.ed-close {
+  position: absolute; top: 10px; right: 10px;
+  width: 24px; height: 24px; border-radius: 50%;
+  background: rgba(255,255,255,0.1);
+  border: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--paper); font-size: 14px;
+  transition: background .15s;
+}
+.ed-close:hover { background: rgba(255,255,255,0.2); }
+.ed-arrow {
+  position: absolute;
+  width: 12px; height: 12px;
+  background: var(--paper);
+  border-left: 1px solid var(--border-mid);
+  border-top: 1px solid var(--border-mid);
+  transform: rotate(45deg);
+}
 
 /* ══════════════════════════════════════════════════
    水平分隔线装饰
@@ -736,10 +890,39 @@ body::before {
         <div id="timeline-section">
           <div id="tl-header">时间轴</div>
           <div id="timeline-inner">
-            <div id="timeline-track">
+            <div id="timeline-container">
               <div id="timeline-axis"></div>
             </div>
+            <div id="timeline-zoom">
+              <span>-</span>
+              <input type="range" id="zoom-slider" min="0.5" max="3" step="0.1" value="1">
+              <span>+</span>
+            </div>
           </div>
+        </div>
+
+        <!-- 事件详情浮层 -->
+        <div id="event-detail">
+          <div class="ed-header">
+            <div class="ed-dot" id="ed-dot"></div>
+            <div class="ed-title" id="ed-title"></div>
+            <div class="ed-year" id="ed-year"></div>
+            <button class="ed-close" onclick="hideEventDetail()">×</button>
+          </div>
+          <div class="ed-body">
+            <div class="ed-desc" id="ed-desc"></div>
+            <div class="ed-meta">
+              <div class="ed-meta-item">
+                <span class="ed-meta-label">类别</span>
+                <span class="ed-cat-badge" id="ed-cat"></span>
+              </div>
+              <div class="ed-meta-item">
+                <span class="ed-meta-label">地点</span>
+                <span class="ed-meta-value" id="ed-places"></span>
+              </div>
+            </div>
+          </div>
+          <div class="ed-arrow" id="ed-arrow"></div>
         </div>
 
         <!-- 答案面板 -->
@@ -992,7 +1175,7 @@ function loadView(url) {
 }
 
 // ══════════════════════════════════════════════════
-//  时间轴渲染（独立面板）
+//  时间轴渲染（垂直时间轴，中间是轴线，事件节点绑定在轴线上）
 // ══════════════════════════════════════════════════
 const CAT_COLORS = {
   mil: '#534AB7',
@@ -1001,54 +1184,160 @@ const CAT_COLORS = {
   nat: '#993C1D',
 };
 
+let _timelineZoom = 1;
+let _timelineEvents = [];
+let _timelineBounds = { minYear: 0, maxYear: 1 };
+
 function renderTimeline(events) {
-  const track = document.getElementById('timeline-track');
+  const container = document.getElementById('timeline-container');
   const section = document.getElementById('timeline-section');
-  console.log('[renderTimeline] track:', track, 'events count:', events ? events.length : 0, 'section:', section);
-  if (!track || !events || events.length === 0) {
-    console.warn('[renderTimeline] skipped - missing track or events');
+  const inner = document.getElementById('timeline-inner');
+  console.log('[renderTimeline] container:', container, 'events count:', events ? events.length : 0);
+  if (!container || !events || events.length === 0) {
+    console.warn('[renderTimeline] skipped - missing container or events');
     return;
   }
 
-  // 排序（事件格式: y=年份, cat=类别, title=标题）
+  // 排序
   const sorted = [...events].sort((a, b) => a.y - b.y);
-  console.log('[renderTimeline] sorted events:', sorted);
-  let html = '<div id="timeline-axis"></div>';
+  _timelineEvents = sorted;
 
-  sorted.forEach((e, idx) => {
-    const color = CAT_COLORS[e.cat] || CAT_COLORS.pol;
-    const label = e.title.length > 12 ? e.title.slice(0, 12) + '…' : e.title;
+  // 计算年份范围
+  const years = sorted.map(e => e.y);
+  const minYear = Math.min(...years);
+  const maxYear = Math.max(...years);
+  _timelineBounds = { minYear, maxYear };
+
+  // 生成刻度线
+  const span = maxYear - minYear;
+  const step = span > 500 ? 50 : span > 200 ? 20 : 10;
+  const ticks = [];
+  for (let y = Math.floor(minYear / step) * step; y <= maxYear + step; y += step) {
+    ticks.push(y);
+  }
+
+  let html = '<div id="timeline-axis"></div>';
+  const baseUnitHeight = 40 * _timelineZoom; // 每个年份单位高度 × 缩放比例
+
+  // 刻度线
+  ticks.forEach(y => {
+    const pos = (y - minYear) * baseUnitHeight;
     html += `
-      <div class="tl-item" data-idx="${idx}" onclick="selectTimelineEvent(${idx})">
-        <span class="tl-year">${e.y < 0 ? '前' + Math.abs(e.y) : e.y}</span>
-        <div class="tl-dot" style="background:${color}"></div>
-        <span class="tl-label">${label}</span>
+      <div class="tl-tick" style="top:${pos}px">
+        <div class="tl-tick-line"></div>
+        <span class="tl-tick-label">${y < 0 ? '前' + Math.abs(y) : y}</span>
       </div>`;
   });
 
-  console.log('[renderTimeline] html length:', html.length);
-  track.innerHTML = html;
-  console.log('[renderTimeline] done, items:', track.querySelectorAll('.tl-item').length);
+  // 事件节点（绑在轴线上）
+  sorted.forEach((e, idx) => {
+    const pos = (e.y - minYear) * baseUnitHeight;
+    const color = CAT_COLORS[e.cat] || CAT_COLORS.pol;
+    const label = e.title.length > 10 ? e.title.slice(0, 10) + '…' : e.title;
+    const isLeft = idx % 2 === 0;
+    html += `
+      <div class="tl-event" style="top:${pos}px" data-idx="${idx}" onclick="selectTimelineEvent(${idx})">
+        <div class="tl-event-dot" style="background:${color}"></div>
+        <span class="tl-event-label ${isLeft ? 'left' : ''}">${label}</span>
+        <span class="tl-event-year">${e.y < 0 ? '前' + Math.abs(e.y) : e.y}</span>
+      </div>`;
+  });
+
+  const totalHeight = (span + step) * baseUnitHeight + 100;
+  container.innerHTML = html;
+  container.style.height = totalHeight + 'px';
+  inner.scrollTop = totalHeight / 2 - inner.clientHeight / 2; // 滚动到中间
+  console.log('[renderTimeline] done, events:', sorted.length);
 }
 
-let _timelineEvents = [];
-
 function selectTimelineEvent(idx) {
-  const items = document.querySelectorAll('.tl-item');
-  items.forEach((it, i) => it.classList.toggle('sel', i === idx));
+  const events = document.querySelectorAll('.tl-event');
+  events.forEach((it, i) => it.classList.toggle('sel', i === idx));
 
-  // 更新 iframe 中的时间轴选中状态（通过 postMessage）
+  // 显示事件详情浮层
+  if (_timelineEvents[idx]) {
+    showEventDetail(_timelineEvents[idx], events[idx]);
+  }
+
+  // 通知 iframe
   const iframe = document.getElementById('view-iframe');
   if (iframe && iframe.contentWindow) {
     iframe.contentWindow.postMessage({ type: 'selectEvent', index: idx }, '*');
   }
 }
 
+const CAT_LABELS = { mil: '军事', pol: '政治', eco: '财政', nat: '灾异' };
+
+function showEventDetail(e, domEl) {
+  const detail = document.getElementById('event-detail');
+  const dot = document.getElementById('ed-dot');
+  const title = document.getElementById('ed-title');
+  const year = document.getElementById('ed-year');
+  const desc = document.getElementById('ed-desc');
+  const cat = document.getElementById('ed-cat');
+  const places = document.getElementById('ed-places');
+  const arrow = document.getElementById('ed-arrow');
+
+  const color = CAT_COLORS[e.cat] || CAT_COLORS.pol;
+
+  dot.style.background = color;
+  title.textContent = e.title;
+  year.textContent = e.y < 0 ? '前' + Math.abs(e.y) + '年' : e.y + '年';
+  desc.textContent = e.desc || '暂无描述';
+  cat.textContent = CAT_LABELS[e.cat] || e.cat || '政治';
+  cat.className = 'ed-cat-badge ' + (e.cat || 'pol');
+  places.textContent = (e.places && e.places.length) ? e.places.join('、') : '暂无';
+
+  // 计算浮层位置（优先显示在节点右侧，左侧空间不够则显示在左侧）
+  const rect = domEl.getBoundingClientRect();
+  const detailW = 280, detailH = 200;
+  const viewportW = window.innerWidth;
+  const viewportH = window.innerHeight;
+
+  let left = rect.right + 12;
+  let top = Math.max(10, Math.min(rect.top - 30, viewportH - detailH - 10));
+  arrow.style.left = 'auto';
+  arrow.style.right = 'auto';
+  arrow.style.top = '50%';
+  arrow.style.transform = 'translateY(-50%) rotate(-45deg)';
+
+  if (left + detailW > viewportW - 10) {
+    left = rect.left - detailW - 12;
+    arrow.style.left = -6 + 'px';
+    arrow.style.right = 'auto';
+  } else {
+    arrow.style.left = 'auto';
+    arrow.style.right = -6 + 'px';
+  }
+
+  detail.style.left = left + 'px';
+  detail.style.top = top + 'px';
+  detail.classList.add('show');
+}
+
+function hideEventDetail() {
+  document.getElementById('event-detail').classList.remove('show');
+  document.querySelectorAll('.tl-event').forEach(el => el.classList.remove('sel'));
+}
+
+// 缩放控制 - 重新计算节点位置（不改 CSS transform）
+document.getElementById('zoom-slider').addEventListener('input', function() {
+  _timelineZoom = parseFloat(this.value);
+  renderTimeline(_timelineEvents); // 重新渲染，应用新间距
+});
+
+// 点击其他地方关闭详情
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('.tl-event') && !e.target.closest('#event-detail')) {
+    hideEventDetail();
+  }
+});
+
 // 监听 iframe 消息
 window.addEventListener('message', e => {
   if (e.data && e.data.type === 'eventSelected') {
     const idx = e.data.index;
-    const items = document.querySelectorAll('.tl-item');
+    const items = document.querySelectorAll('.tl-event');
     items.forEach((it, i) => it.classList.toggle('sel', i === idx));
   }
 });
