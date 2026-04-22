@@ -99,6 +99,16 @@ class AgentEngine:
                         pass  # Terminal event
 
                 if not tool_calls:
+                    # ── 自动注入 linked_view ──────────────────────────────
+                    # 每次模型写完最终答案后，自动调用 linked_view 工具
+                    # 从答案文本中提取时间事件和地名，生成联动地图+时间轴页面
+                    linked_view_tool = self.tool_registry.get("linked_view")
+                    if linked_view_tool and full_response:
+                        async for lv_event in self._auto_invoke_linked_view(
+                            full_response, prompt, linked_view_tool
+                        ):
+                            yield lv_event
+                    # ─────────────────────────────────────────────────────
                     yield AssistantTurnComplete(content=full_response)
                     self._messages.append(ConversationMessage(role="assistant", content=full_response))
                     return
@@ -237,6 +247,96 @@ class AgentEngine:
                     messages.append({"role": msg.role, "content": api_content})
         print(f"[DEBUG] _build_api_messages: {messages}", flush=True)
         return messages
-
-
+    async def _auto_invoke_linked_view(
+        self,
+        answer_text: str,
+        original_prompt: str,
+        linked_view_tool: Any,
+    ):
+        """答案写完后，自动用 LLM 提取事件+地名，调用 linked_view 工具。
+ 
+        调用逻辑：
+        1. 构造专用提取 prompt（原始问题 + 完整答案）
+        2. 用独立的单轮 API 请求（不污染主对话历史）
+        3. 模型只能调用 linked_view，返回结构化数据
+        4. 引擎直接执行工具，yield 事件通知 CLI/前端
+        """
+        from ..api import ApiMessageRequest
+ 
+        extraction_prompt = (
+            f"以下是用户的历史研究问题和已生成的回答。\n\n"
+            f"【用户问题】\n{original_prompt}\n\n"
+            f"【回答内容】\n{answer_text}\n\n"
+            f"请调用 linked_view 工具，从上述回答中提取：\n"
+            f"1. 所有明确提到年份的历史事件（events）\n"
+            f"2. 所有出现的历史地名（places），提供准确经纬度\n"
+            f"3. 每个事件的 place_names 填入该事件相关地名，"
+            f"名称必须与 places 列表中的 name 完全一致\n"
+            f"4. title 设为对问题的简短概括（10字以内）\n\n"
+            f"经纬度使用现代坐标，精度到小数点后1位即可。"
+        )
+ 
+        tools = self.tool_registry.to_api_schema()
+        lv_schema = [t for t in tools if t.get("name") == "linked_view"]
+        if not lv_schema:
+            return
+ 
+        request = ApiMessageRequest(
+            model=self.model,
+            messages=[{"role": "user", "content": extraction_prompt}],
+            system_prompt=(
+                "你是结构化信息提取助手。"
+                "请严格按工具 schema 提取信息并调用 linked_view 工具，不要输出任何其他文字。"
+            ),
+            tools=lv_schema,
+        )
+ 
+        tool_name = ""
+        tool_input: dict = {}
+ 
+        try:
+            async for event in self.api_client.stream_message(request):
+                if hasattr(event, "name") and hasattr(event, "input"):
+                    tool_name = event.name
+                    tool_input = event.input or {}
+        except Exception as e:
+            print(f"[linked_view extraction error] {e}", flush=True)
+            return
+ 
+        if tool_name != "linked_view":
+            return
+ 
+        yield ToolExecutionStarted(tool_name="linked_view", tool_input=tool_input)
+ 
+        try:
+            parsed = linked_view_tool.input_model.model_validate(tool_input)
+        except Exception as e:
+            yield ToolExecutionCompleted(
+                tool_name="linked_view",
+                result=f"linked_view input error: {e}",
+                is_error=True,
+            )
+            return
+ 
+        from ..agent import ToolExecutionContext
+        context = ToolExecutionContext(
+            cwd=self.cwd,
+            metadata={"original_question": original_prompt},
+        )
+ 
+        try:
+            result = await linked_view_tool.execute(parsed, context)
+            yield ToolExecutionCompleted(
+                tool_name="linked_view",
+                result=result.output,
+                is_error=result.is_error,
+                metadata=getattr(result, "metadata", None),
+            )
+        except Exception as e:
+            yield ToolExecutionCompleted(
+                tool_name="linked_view",
+                result=f"linked_view execution error: {e}",
+                is_error=True,
+            )
+            
 __all__ = ["AgentEngine", "ConversationMessage", "ToolUseBlock"]

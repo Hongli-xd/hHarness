@@ -37,6 +37,8 @@ class ToolExecutionCompleted(StreamEvent):
     tool_name: str
     result: str
     is_error: bool = False
+    metadata: dict[str, Any] | None = None  # 可携带 html 等附加数据
+
 
 
 @dataclass

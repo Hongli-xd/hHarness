@@ -13,8 +13,7 @@ if TYPE_CHECKING:
 
 from .cite_tool import CiteTool
 from .rag_query_tool import RAGDataQueryTool, RAGQueryTool
-from .timeline_tool import TimelineTool
-from .map_location_tool import MapLocationTool
+from .linked_view_tool import LinkedViewTool
 
 
 def create_historical_tool_registry(
@@ -48,8 +47,7 @@ def create_historical_tool_registry(
     registry.register(RAGDataQueryTool(rag_client))
 
     # Visualization tools
-    registry.register(TimelineTool())
-    registry.register(MapLocationTool())
+    registry.register(LinkedViewTool())  # 联动视图，由引擎自动注入调用
 
     return registry
 

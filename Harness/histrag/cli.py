@@ -249,6 +249,28 @@ def tools() -> None:
     console.print("  rag_data_query - RAG data only (no LLM)")
     console.print("  cite         - Citation and source tracing")
 
+@app.command()
+def serve(
+    host: str = typer.Option("0.0.0.0", "--host", "-H"),
+    port: int = typer.Option(7860, "--port", "-p"),
+    reload: bool = typer.Option(False, "--reload"),
+) -> None:
+    """启动 Web UI 服务器，浏览器访问 http://localhost:{port}"""
+    try:
+        import uvicorn
+    except ImportError:
+        console.print("[red]需要安装 uvicorn：pip install uvicorn[standard][/red]")
+        raise typer.Exit(1)
+ 
+    console.print(f"[bold green]HistRAG Web UI[/bold green] 启动中…")
+    console.print(f"  → [link=http://localhost:{port}]http://localhost:{port}[/link]")
+    uvicorn.run(
+        "frontend.server:app",
+        host=host,
+        port=port,
+        reload=reload,
+    )
+ 
 
 def main():
     app()
