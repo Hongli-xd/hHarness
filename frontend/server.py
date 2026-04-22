@@ -101,21 +101,40 @@ async def query_stream(q: str):
 
             try:
                 async for event in runtime.engine.submit_message(q):
+                    event_type = type(event).__name__
+                    print(f"[SERVER EVENT] {event_type}", flush=True)
+
                     if isinstance(event, AssistantTextDelta):
                         yield _sse({"type": "text_delta", "text": event.text})
 
                     elif isinstance(event, ToolExecutionStarted):
-                        yield _sse({"type": "tool_start", "tool": event.tool_name})
+                        print(f"[SERVER] tool_start: {event.tool_name} | input keys: {list((event.tool_input or {}).keys())}", flush=True)
+                        yield _sse({"type": "tool_start", "tool": event.tool_name, "input": event.tool_input})
 
                     elif isinstance(event, ToolExecutionCompleted):
-                        if event.tool_name == "linked_view" and event.metadata:
-                            html = event.metadata.get("html", "")
+                        meta = getattr(event, "metadata", None) or {}
+                        html_len = len(meta.get("html", ""))
+                        print(f"[SERVER] tool_end: {event.tool_name} | is_error={event.is_error} | metadata keys={list(meta.keys())} | html_len={html_len}", flush=True)
+
+                        if event.tool_name == "linked_view":
+                            html = meta.get("html", "")
                             if html:
+                                print(f"[SERVER] linked_view HTML ready, length={len(html)}", flush=True)
                                 await _set_latest_view(html)
                                 yield _sse({
                                     "type": "linked_view",
                                     "url": "/api/view/latest",
                                 })
+                            elif event.is_error:
+                                print(f"[SERVER] linked_view error: {event.result}", flush=True)
+                                yield _sse({
+                                    "type": "tool_end",
+                                    "tool": event.tool_name,
+                                    "is_error": True,
+                                    "result": (event.result or "")[:300],
+                                })
+                            else:
+                                print(f"[SERVER] linked_view completed but no html in metadata!", flush=True)
                         else:
                             yield _sse({
                                 "type": "tool_end",
@@ -125,9 +144,11 @@ async def query_stream(q: str):
                             })
 
                     elif isinstance(event, AssistantTurnComplete):
+                        print(f"[SERVER] turn_complete, answer length={len(event.content)}", flush=True)
                         yield _sse({"type": "turn_complete", "content": event.content})
 
                     elif isinstance(event, ErrorEvent):
+                        print(f"[SERVER] error event: {event.error}", flush=True)
                         yield _sse({"type": "error", "message": event.error})
 
             finally:

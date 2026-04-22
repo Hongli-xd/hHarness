@@ -232,18 +232,101 @@ body::before {
 .t-prompt { color: var(--vermilion); font-weight: bold; margin-right: 6px; }
 .t-query  { color: var(--gold-l); }
 .t-text   { color: var(--terminal-txt); white-space: pre-wrap; }
-.t-tool-start {
-  color: var(--celadon-l);
+.t-tool-block {
+  margin: 6px 0 2px;
   border-left: 2px solid var(--celadon);
-  padding-left: 8px; margin: 4px 0;
-  font-style: italic;
+  padding: 5px 10px;
+  background: rgba(90,138,110,0.07);
+  border-radius: 0 3px 3px 0;
 }
+.t-tool-header {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 11px; color: var(--celadon-l);
+  font-weight: 500; letter-spacing: 0.5px;
+  margin-bottom: 3px;
+}
+.t-tool-badge {
+  font-size: 9px; padding: 1px 6px; border-radius: 10px;
+  font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase;
+  font-family: monospace;
+}
+.t-tool-badge-mode {
+  background: rgba(201,168,76,0.18);
+  color: var(--gold-l);
+  border: 1px solid rgba(201,168,76,0.35);
+}
+.t-tool-query {
+  font-size: 11.5px;
+  color: #f0a050;
+  font-style: italic;
+  line-height: 1.5;
+  padding: 2px 0;
+  white-space: pre-wrap; word-break: break-all;
+}
+.t-tool-query::before { content: '"'; color: rgba(240,160,80,0.5); margin-right: 1px; }
+.t-tool-query::after  { content: '"'; color: rgba(240,160,80,0.5); margin-left: 1px; }
+.t-tool-done {
+  display: flex; align-items: center; gap: 5px;
+  font-size: 10.5px; color: rgba(90,138,110,0.65);
+  margin-top: 3px;
+}
+.t-tool-done::before { content: "✓"; color: var(--celadon); font-weight: bold; }
 .t-tool-end {
   color: rgba(90,138,110,0.7);
   border-left: 2px solid rgba(90,138,110,0.4);
   padding-left: 8px; margin-bottom: 4px;
   font-size: 11px;
 }
+
+/* ══ 等待画面 ══ */
+#view-pending {
+  position: absolute; inset: 0;
+  display: none; align-items: center; justify-content: center;
+  background: var(--paper); z-index: 4;
+  pointer-events: none;  /* 隐藏时不阻挡交互 */
+}
+#view-pending.show { display: flex; }
+.vp-inner { display: flex; flex-direction: column; align-items: center; gap: 16px; user-select: none; }
+.vp-brush { width: 80px; height: 80px; opacity: 0.85; }
+.vp-brush svg { width: 100%; height: 100%; }
+.vp-stroke { stroke-dasharray: 200; stroke-dashoffset: 200; animation: brush-write 2.4s ease-in-out infinite; }
+.vp-stroke.s1 { animation-delay: 0s;    stroke-dasharray: 110; stroke-dashoffset: 110; }
+.vp-stroke.s2 { animation-delay: 0.3s;  stroke-dasharray: 90;  stroke-dashoffset: 90; }
+.vp-stroke.s3 { animation-delay: 0.55s; stroke-dasharray: 95;  stroke-dashoffset: 95; }
+.vp-stroke.s4 { animation-delay: 0.8s;  stroke-dasharray: 70;  stroke-dashoffset: 70; }
+.vp-stroke.s5 { animation-delay: 1.0s;  stroke-dasharray: 68;  stroke-dashoffset: 68; }
+@keyframes brush-write {
+  0%   { stroke-dashoffset: var(--dash,200); opacity: 0; }
+  8%   { opacity: 1; }
+  55%  { stroke-dashoffset: 0; opacity: 1; }
+  80%  { stroke-dashoffset: 0; opacity: 0.6; }
+  100% { stroke-dashoffset: 0; opacity: 0.2; }
+}
+.vp-seal {
+  width: 42px; height: 42px; border: 2px solid var(--vermilion-d);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-serif); font-size: 20px; font-weight: 900;
+  color: var(--vermilion-d); position: relative;
+  animation: seal-pulse 2.4s ease-in-out infinite;
+}
+.vp-seal::before { content:''; position:absolute; inset:3px; border:1px solid var(--vermilion); opacity:0.3; }
+@keyframes seal-pulse {
+  0%,100% { opacity:0.5; transform:scale(0.96); }
+  50%      { opacity:1;   transform:scale(1.02); }
+}
+.vp-dots { display:flex; gap:6px; align-items:center; }
+.vp-dot {
+  width:5px; height:5px; border-radius:50%; background:var(--vermilion-d);
+  animation:dot-bounce 1.4s ease-in-out infinite; opacity:0.7;
+}
+.vp-dot:nth-child(2) { animation-delay:0.2s; background:var(--gold); }
+.vp-dot:nth-child(3) { animation-delay:0.4s; }
+@keyframes dot-bounce {
+  0%,80%,100% { transform:translateY(0);   opacity:0.4; }
+  40%          { transform:translateY(-6px); opacity:1; }
+}
+.vp-text  { font-family:var(--font-serif); font-size:13px; color:var(--ink-faint); letter-spacing:2px; }
+.vp-phase { font-family:var(--font-ui); font-size:11px; color:var(--ink-ghost); letter-spacing:1px; min-height:16px; transition:opacity .4s; }
 .t-tool-err {
   color: var(--vermilion-l);
   border-left: 2px solid var(--vermilion);
@@ -364,7 +447,7 @@ body::before {
 /* ── 视图区：地图 + 时间轴 ── */
 #view-area {
   flex: 1; display: flex; flex-direction: column;
-  overflow: hidden;
+  overflow: hidden; position: relative;
   opacity: 0; transition: opacity .5s;
 }
 #view-area.visible { opacity: 1; }
@@ -563,7 +646,6 @@ body::before {
     <div id="view-area">
       <div id="view-tabs">
         <div class="v-tab active" onclick="switchTab('map')" id="tab-map">◎ 地图 · 时间轴</div>
-        <div class="v-tab" onclick="switchTab('answer')" id="tab-answer">卷 · 研究答案</div>
         <div id="view-loading">
           <div class="spin"></div>
           <span>生成视图…</span>
@@ -571,6 +653,28 @@ body::before {
       </div>
       <div id="view-iframe-wrap">
         <iframe id="view-iframe" src="about:blank"></iframe>
+        <!-- 等待画面：覆盖在 iframe 上方 -->
+        <div id="view-pending">
+          <div class="vp-inner">
+            <div class="vp-brush">
+              <svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path class="vp-stroke s1" d="M60 10 Q55 40 58 70 Q60 90 58 110" stroke="#3d3026" stroke-width="3.5" stroke-linecap="round"/>
+                <path class="vp-stroke s2" d="M40 25 Q50 50 48 80 Q46 95 48 108" stroke="#3d3026" stroke-width="2.5" stroke-linecap="round"/>
+                <path class="vp-stroke s3" d="M78 20 Q72 48 70 75 Q69 92 72 106" stroke="#3d3026" stroke-width="2" stroke-linecap="round"/>
+                <path class="vp-stroke s4" d="M30 45 Q50 42 70 43 Q85 44 92 45" stroke="#3d3026" stroke-width="2" stroke-linecap="round"/>
+                <path class="vp-stroke s5" d="M28 70 Q48 67 68 68 Q82 69 90 70" stroke="#3d3026" stroke-width="1.5" stroke-linecap="round"/>
+              </svg>
+            </div>
+            <div class="vp-seal">思</div>
+            <div class="vp-dots">
+              <span class="vp-dot"></span>
+              <span class="vp-dot"></span>
+              <span class="vp-dot"></span>
+            </div>
+            <div class="vp-text">典籍检索中，稍候…</div>
+            <div class="vp-phase" id="vp-phase">正在查阅史料</div>
+          </div>
+        </div>
       </div>
       <div id="answer-panel">
         <div id="answer-title">研究结论</div>
@@ -627,11 +731,13 @@ function startQuery(q) {
   termLine(`<span class="t-prompt">›</span><span class="t-query">${escHtml(q)}</span>`);
   termSep();
 
-  // 重置 iframe
+  // 重置 iframe，显示等待画面
   document.getElementById('view-iframe').src = 'about:blank';
   document.getElementById('view-loading').classList.remove('show');
   document.getElementById('answer-panel').classList.remove('show');
   document.getElementById('answer-content').textContent = '';
+  showPending(true);
+  startPhaseLoop();
 
   // 打开 SSE
   const url = `/api/query?q=${encodeURIComponent(q)}`;
@@ -673,18 +779,44 @@ function startQuery(q) {
         updateCursorLine(textBuf);
         break;
 
-      case 'tool_start':
+      case 'tool_start': {
         flushText();
-        termLine(`<span class="t-tool-start">⟳ 工具调用: ${escHtml(msg.tool)}</span>`);
+        const inp  = msg.input || {};
+        const tool = msg.tool  || '';
+        const isRag = tool === 'rag_query' || tool === 'rag_data_query';
+        const mode  = (inp.mode || '').toUpperCase();
+        const query = inp.query || '';
+        const topk  = inp.top_k || '';
+        const blockId = 'tool-' + Date.now();
+        let inner = '<div class="t-tool-header">'
+          + '<span style="color:var(--celadon-l)">⟳ ' + escHtml(tool) + '</span>';
+        if (isRag && mode)  inner += '<span class="t-tool-badge t-tool-badge-mode">' + escHtml(mode) + '</span>';
+        if (isRag && topk)  inner += '<span class="t-tool-badge" style="background:rgba(255,255,255,0.06);color:var(--ink-ghost);border:1px solid rgba(255,255,255,0.1)">top_k ' + escHtml(String(topk)) + '</span>';
+        inner += '</div>';
+        if (isRag && query) inner += '<div class="t-tool-query">' + escHtml(query) + '</div>';
+        inner += '<div class="t-tool-done" id="' + blockId + '-done" style="display:none">完成</div>';
+        const el = document.createElement('div');
+        el.className = 't-line';
+        el.innerHTML = '<div class="t-tool-block" id="' + blockId + '">' + inner + '</div>';
+        document.getElementById('terminal-body').appendChild(el);
+        scrollTerminal();
+        window._lastToolBlockId = blockId;
         break;
+      }
 
-      case 'tool_end':
-        if (msg.is_error) {
-          termLine(`<span class="t-tool-err">✗ ${escHtml(msg.tool)}: ${escHtml(msg.result||'')}</span>`);
-        } else {
-          termLine(`<span class="t-tool-end">✓ ${escHtml(msg.tool)} 完成</span>`);
+      case 'tool_end': {
+        const doneEl = document.getElementById((window._lastToolBlockId||'') + '-done');
+        if (doneEl) {
+          if (msg.is_error) {
+            doneEl.style.color = 'var(--vermilion-l)';
+            doneEl.innerHTML = '✗ 失败: ' + escHtml((msg.result||'').slice(0,80));
+          }
+          doneEl.style.display = 'flex';
+        } else if (msg.is_error) {
+          termLine('<span class="t-tool-err">✗ ' + escHtml(msg.tool||'') + ': ' + escHtml(msg.result||'') + '</span>');
         }
         break;
+      }
 
       case 'linked_view':
         flushText();
@@ -701,8 +833,16 @@ function startQuery(q) {
       case 'turn_complete':
         flushText();
         termSep();
-        // 填充答案面板
-        document.getElementById('answer-content').textContent = answerBuf.trim();
+        // Markdown 渲染答案
+        const mdContent = answerBuf.trim();
+        const answerEl = document.getElementById('answer-content');
+        if (window.marked) {
+          answerEl.innerHTML = marked.parse(mdContent);
+        } else {
+          answerEl.textContent = mdContent;
+        }
+        stopPhaseLoop();
+        showPending(false);
         isRunning = false;
         setStatus('done');
         es.close();
@@ -743,6 +883,8 @@ function loadView(url) {
   const iframe = document.getElementById('view-iframe');
   iframe.onload = () => {
     document.getElementById('view-loading').classList.remove('show');
+    showPending(false);
+    stopPhaseLoop();
   };
   iframe.src = url + '?t=' + Date.now();
   switchTab('map');
@@ -751,7 +893,6 @@ function loadView(url) {
 function switchTab(tab) {
   currentTab = tab;
   document.getElementById('tab-map').classList.toggle('active', tab === 'map');
-  document.getElementById('tab-answer').classList.toggle('active', tab === 'answer');
 
   const iframe    = document.getElementById('view-iframe');
   const answerPnl = document.getElementById('answer-panel');
@@ -813,6 +954,36 @@ function clearTerminal() {
 function scrollTerminal() {
   const body = document.getElementById('terminal-body');
   body.scrollTop = body.scrollHeight;
+}
+
+// ══════════════════════════════════════════════════
+//  等待画面控制
+// ══════════════════════════════════════════════════
+function showPending(on) {
+  const el = document.getElementById('view-pending');
+  if (!el) return;
+  if (on) {
+    el.classList.add('show');
+    el.style.pointerEvents = 'none';  // 不阻挡下方 iframe 操作
+  } else {
+    el.classList.remove('show');
+    el.style.pointerEvents = 'none';
+  }
+}
+const PHASES = ['正在查阅史料…','检索知识图谱…','梳理历史脉络…','考证文献来源…','整理时间地理…','综合史料撰文…'];
+let _phaseTimer = null, _phaseIdx = 0;
+function startPhaseLoop() {
+  _phaseIdx = 0;
+  const el = document.getElementById('vp-phase');
+  if (el) el.textContent = PHASES[0];
+  _phaseTimer = setInterval(() => {
+    _phaseIdx = (_phaseIdx + 1) % PHASES.length;
+    const el = document.getElementById('vp-phase');
+    if (el) { el.style.opacity='0'; setTimeout(()=>{ el.textContent=PHASES[_phaseIdx]; el.style.opacity='1'; },200); }
+  }, 2800);
+}
+function stopPhaseLoop() {
+  if (_phaseTimer) { clearInterval(_phaseTimer); _phaseTimer = null; }
 }
 
 // ══════════════════════════════════════════════════

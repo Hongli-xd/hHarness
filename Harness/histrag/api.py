@@ -71,14 +71,23 @@ class AnthropicApiClient:
         if request.tools:
             params["tools"] = request.tools
 
+        # 标识这次请求的身份，方便日志区分
+        tool_names = [t.get("name","?") for t in (request.tools or [])]
+        req_label = f"[tools={tool_names}]" if tool_names else "[no-tools]"
+        msg_count = len(request.messages)
+        last_msg_preview = str(request.messages[-1])[:80] if request.messages else ""
+        print(f"[API] stream_message START {req_label} msgs={msg_count} last={last_msg_preview!r}", flush=True)
+
         # Map tool_call_id -> partial JSON from input_json events
         pending_tool_inputs: dict[str, str] = {}
         # Most recently seen tool_call_id (set during content_block_start of tool_use)
         last_tool_call_id: str | None = None
+        event_count = 0
 
         try:
             async with self._client.messages.stream(**params) as stream:
                 async for event in stream:
+                    event_count += 1
                     event_type = getattr(event, "type", None)
 
                     if event_type == "content_block_delta":
@@ -128,10 +137,11 @@ class AnthropicApiClient:
 
                     elif event_type == "message_delta":
                         stop_reason = getattr(event, "stop_reason", None)
+                        print(f"[API] stream_message DONE {req_label} events={event_count} stop_reason={stop_reason}", flush=True)
                         yield ApiMessageCompleteEvent(content="", stop_reason=stop_reason)
 
         except Exception as e:
-            print(f"API ERROR: {e}", flush=True)
+            print(f"[API] stream_message ERROR {req_label} after {event_count} events: {type(e).__name__}: {e}", flush=True)
             raise
 
 

@@ -254,60 +254,89 @@ class AgentEngine:
         linked_view_tool: Any,
     ):
         """答案写完后，自动用 LLM 提取事件+地名，调用 linked_view 工具。
- 
+
         调用逻辑：
-        1. 构造专用提取 prompt（原始问题 + 完整答案）
+        1. 截断答案文本，避免 context 过长导致连接超时
         2. 用独立的单轮 API 请求（不污染主对话历史）
         3. 模型只能调用 linked_view，返回结构化数据
-        4. 引擎直接执行工具，yield 事件通知 CLI/前端
+        4. 超时保护 + 重试，处理 MiniMax 连接中断问题
         """
+        import asyncio
         from ..api import ApiMessageRequest
- 
+
+        # ── 截断答案，控制 context 长度，避免 MiniMax 超时断连 ──
+        # 保留前 1500 字符足够提取事件和地名
+        MAX_ANSWER_CHARS = 1500
+        truncated_answer = answer_text[:MAX_ANSWER_CHARS]
+        if len(answer_text) > MAX_ANSWER_CHARS:
+            truncated_answer += "\n...(省略)"
+
         extraction_prompt = (
-            f"以下是用户的历史研究问题和已生成的回答。\n\n"
-            f"【用户问题】\n{original_prompt}\n\n"
-            f"【回答内容】\n{answer_text}\n\n"
-            f"请调用 linked_view 工具，从上述回答中提取：\n"
-            f"1. 所有明确提到年份的历史事件（events）\n"
-            f"2. 所有出现的历史地名（places），提供准确经纬度\n"
-            f"3. 每个事件的 place_names 填入该事件相关地名，"
-            f"名称必须与 places 列表中的 name 完全一致\n"
-            f"4. title 设为对问题的简短概括（10字以内）\n\n"
-            f"经纬度使用现代坐标，精度到小数点后1位即可。"
+            "根据以下历史研究问题和回答，调用 linked_view 工具提取结构化数据。\n\n"
+            f"【问题】{original_prompt}\n\n"
+            f"【回答摘要】\n{truncated_answer}\n\n"
+            "提取要求：\n"
+            "- events：回答中提到年份的历史事件，每个事件绑定相关地名\n"
+            "- places：回答中出现的历史地名，附经纬度（现代坐标，精度0.1度）\n"
+            "- place_names 必须与 places 的 name 完全一致\n"
+            "- title：问题的10字以内概括"
         )
- 
+
         tools = self.tool_registry.to_api_schema()
         lv_schema = [t for t in tools if t.get("name") == "linked_view"]
         if not lv_schema:
             return
- 
+
         request = ApiMessageRequest(
             model=self.model,
             messages=[{"role": "user", "content": extraction_prompt}],
-            system_prompt=(
-                "你是结构化信息提取助手。"
-                "请严格按工具 schema 提取信息并调用 linked_view 工具，不要输出任何其他文字。"
-            ),
+            system_prompt="你是结构化信息提取助手，只调用 linked_view 工具，不输出任何文字。",
             tools=lv_schema,
         )
- 
+
         tool_name = ""
         tool_input: dict = {}
- 
-        try:
-            async for event in self.api_client.stream_message(request):
-                if hasattr(event, "name") and hasattr(event, "input"):
-                    tool_name = event.name
-                    tool_input = event.input or {}
-        except Exception as e:
-            print(f"[linked_view extraction error] {e}", flush=True)
+
+        # ── 超时保护：最多等待 60 秒，失败静默返回不影响主流程 ──
+        MAX_RETRIES = 2
+        for attempt in range(MAX_RETRIES):
+            try:
+                async def _stream():
+                    nonlocal tool_name, tool_input
+                    async for event in self.api_client.stream_message(request):
+                        if hasattr(event, "name") and hasattr(event, "input"):
+                            tool_name = event.name
+                            tool_input = event.input or {}
+
+                await asyncio.wait_for(_stream(), timeout=60.0)
+                break  # 成功则跳出重试循环
+
+            except asyncio.TimeoutError:
+                print(f"[linked_view] 第{attempt+1}次超时，{'重试' if attempt < MAX_RETRIES-1 else '放弃'}", flush=True)
+                tool_name = ""
+                tool_input = {}
+                if attempt < MAX_RETRIES - 1:
+                    await asyncio.sleep(1)
+
+            except Exception as e:
+                err_msg = str(e)
+                # 连接中断错误：等待后重试
+                if "incomplete chunked read" in err_msg or "peer closed" in err_msg:
+                    print(f"[linked_view] 连接中断 (第{attempt+1}次): {err_msg}", flush=True)
+                    tool_name = ""
+                    tool_input = {}
+                    if attempt < MAX_RETRIES - 1:
+                        await asyncio.sleep(2)
+                else:
+                    print(f"[linked_view extraction error] {err_msg}", flush=True)
+                    return
+
+        if tool_name != "linked_view" or not tool_input:
+            print("[linked_view] 未能提取到结构化数据，跳过视图生成", flush=True)
             return
- 
-        if tool_name != "linked_view":
-            return
- 
+
         yield ToolExecutionStarted(tool_name="linked_view", tool_input=tool_input)
- 
+
         try:
             parsed = linked_view_tool.input_model.model_validate(tool_input)
         except Exception as e:
@@ -317,22 +346,27 @@ class AgentEngine:
                 is_error=True,
             )
             return
- 
+
         from ..agent import ToolExecutionContext
         context = ToolExecutionContext(
             cwd=self.cwd,
             metadata={"original_question": original_prompt},
         )
- 
+
         try:
             result = await linked_view_tool.execute(parsed, context)
+            meta = getattr(result, "metadata", None)
+            html_len = len(meta.get("html", "")) if meta else 0
+            print(f"[ENGINE] linked_view done: is_error={result.is_error} meta_keys={list(meta.keys()) if meta else None} html_len={html_len}", flush=True)
             yield ToolExecutionCompleted(
                 tool_name="linked_view",
                 result=result.output,
                 is_error=result.is_error,
-                metadata=getattr(result, "metadata", None),
+                metadata=meta,
             )
+            print("[ENGINE] ToolExecutionCompleted yielded", flush=True)
         except Exception as e:
+            print(f"[ENGINE] linked_view execute exception: {type(e).__name__}: {e}", flush=True)
             yield ToolExecutionCompleted(
                 tool_name="linked_view",
                 result=f"linked_view execution error: {e}",
