@@ -118,12 +118,14 @@ async def query_stream(q: str):
 
                         if event.tool_name == "linked_view":
                             html = meta.get("html", "")
+                            events_data = meta.get("events", [])
                             if html:
                                 print(f"[SERVER] linked_view HTML ready, length={len(html)}", flush=True)
                                 await _set_latest_view(html)
                                 yield _sse({
                                     "type": "linked_view",
                                     "url": "/api/view/latest",
+                                    "events": events_data,
                                 })
                             elif event.is_error:
                                 print(f"[SERVER] linked_view error: {event.result}", flush=True)

@@ -39,10 +39,10 @@ python -m histrag version-cmd            # Show version
 ```
 histrag/
 ├── integration.py       # Entry point: create_historical_runtime() builds the full stack
-├── agent/engine.py      # AgentEngine - simplified agent loop (replaces OpenHarness QueryEngine)
-├── coordinator/         # 2-agent coordination (HistorianCoordinator + KGVerifierAgent)
-├── tools/               # Historical research tools (CiteTool, RAGQueryTool, etc.)
-├── lightrag/client.py   # Async wrapper around LightRAG operations
+├── agent/engine.py     # AgentEngine - simplified agent loop (replaces OpenHarness QueryEngine)
+├── coordinator/        # 2-agent coordination (HistorianCoordinator + KGVerifierAgent)
+├── tools/              # Historical research tools (CiteTool, RAGQueryTool, etc.)
+├── lightrag/client.py  # Async wrapper around LightRAG operations
 ├── skills/loader.py     # Loads historian methodology skills (chronology, comparison, etc.)
 └── prompts/historian.py # Builds system prompt from ohmo/ files + skills
 ```
@@ -85,11 +85,12 @@ await runtime.rag_client.finalize()
 
 ## Tool Priority
 
-Historical tools in `tools/registry.py` override same-name tools from OpenHarness when merged. The current tools are:
-- `cite` - citation management and source tracing
+Historical tools in `tools/registry.py` override same-name tools from OpenHarness when merged:
+- `kg_query` - entity/relation queries against knowledge graph
 - `rag_query` - LLM-powered RAG queries
-- `rag_data_query` - structured retrieval results (no LLM)
-- `linked_view` - timeline + map linked visualization (auto-invoked after answer generation)
+- `rag_data_query` - structured retrieval (no LLM)
+- `cite` - citation management and source tracing
+- `linked_view` - timeline + map visualization (auto-invoked after answer generation)
 
 **Linked View Auto-invocation**: After the model generates its final answer, the engine automatically invokes `linked_view` to extract events and places from the response and produce a linked timeline+map HTML visualization. This requires no explicit tool call from the model.
 

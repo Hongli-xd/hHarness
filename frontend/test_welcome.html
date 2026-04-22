@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>史鉴 · HistRAG - 欢迎界面</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@300;400;500;600;700;900&family=Noto+Sans+SC:wght@300;400;500&family=ZCOOL+XiaoWei&family=Ma+Shan+Zheng&display=swap" rel="stylesheet">
+<style>
+:root {
+  --paper:        #f4efe6;
+  --paper-dark:   #ede6d8;
+  --paper-deep:   #e0d5c0;
+  --ink:          #1a1410;
+  --ink-mid:      #3d3026;
+  --ink-faint:    #7a6e5e;
+  --ink-ghost:    #b0a492;
+  --vermilion:    #c0392b;
+  --vermilion-l:  #e05a45;
+  --vermilion-d:  #962d22;
+  --gold:         #c9a84c;
+  --gold-l:       #e8c96a;
+  --celadon:      #5a8a6e;
+  --celadon-l:    #7aaa8e;
+  --border:       rgba(60,45,30,0.15);
+  --border-mid:   rgba(60,45,30,0.25);
+  --shadow:       rgba(20,12,5,0.12);
+  --shadow-deep:  rgba(20,12,5,0.22);
+  --panel-bg:     rgba(244,239,230,0.92);
+  --terminal-bg:  #1c1610;
+  --terminal-txt: #d4c9a8;
+  --radius:       4px;
+  --font-serif:   'ZCOOL XiaoWei', 'Noto Serif SC', serif;
+  --font-body:    'Noto Serif SC', serif;
+  --font-ui:      'Noto Sans SC', sans-serif;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; overflow: hidden; background: var(--paper); color: var(--ink); font-family: var(--font-body); }
+body::before {
+  content: ''; position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='400' height='400' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+  opacity: 0.6;
+}
+#header {
+  position: relative; z-index: 10; display: flex; align-items: center; gap: 0;
+  height: 52px; background: var(--ink); border-bottom: 2px solid var(--vermilion-d);
+  padding: 0 20px; flex-shrink: 0;
+}
+#logo { display: flex; align-items: center; gap: 12px; margin-right: 28px; }
+#logo-seal {
+  width: 36px; height: 36px; border: 2px solid var(--vermilion);
+  display: flex; align-items: center; justify-content: center; position: relative; background: transparent; flex-shrink: 0;
+}
+#logo-seal::before { content: ''; position: absolute; inset: 3px; border: 1px solid var(--vermilion-l); opacity: 0.5; }
+#logo-seal span { font-family: var(--font-serif); font-size: 14px; font-weight: 900; color: var(--vermilion); letter-spacing: -1px; line-height: 1; }
+#logo-text { display: flex; flex-direction: column; gap: 1px; }
+#logo-zh { font-family: var(--font-serif); font-size: 17px; font-weight: 600; color: var(--paper); letter-spacing: 3px; }
+#logo-en { font-family: var(--font-ui); font-size: 9px; font-weight: 300; color: var(--ink-ghost); letter-spacing: 4px; text-transform: uppercase; }
+#search-wrap { flex: 1; max-width: 680px; margin: 0 auto; position: relative; display: flex; align-items: center; }
+#search-input {
+  width: 100%; height: 34px; background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.15); border-radius: 2px;
+  padding: 0 44px 0 16px; font-family: var(--font-body); font-size: 14px;
+  color: var(--paper); outline: none; transition: border-color .2s, background .2s; letter-spacing: 0.5px;
+}
+#search-input::placeholder { color: var(--ink-ghost); font-size: 13px; }
+#search-input:focus { border-color: var(--vermilion); background: rgba(255,255,255,0.09); }
+#search-btn {
+  position: absolute; right: 0; width: 38px; height: 34px;
+  background: var(--vermilion-d); border: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: background .15s; border-radius: 0 2px 2px 0;
+}
+#search-btn:hover { background: var(--vermilion); }
+#search-btn svg { width: 15px; height: 15px; fill: none; stroke: #fff; stroke-width: 2; }
+#status-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--celadon); margin-left: 16px; flex-shrink: 0; }
+#app { display: flex; height: calc(100vh - 52px); position: relative; z-index: 1; }
+#terminal-panel {
+  width: 420px; flex-shrink: 0; display: flex; flex-direction: column;
+  background: var(--terminal-bg); border-right: 1px solid rgba(192,57,43,0.3); position: relative; overflow: hidden;
+}
+#terminal-header {
+  display: flex; align-items: center; gap: 8px; padding: 8px 14px;
+  background: rgba(255,255,255,0.04); border-bottom: 1px solid rgba(255,255,255,0.07); flex-shrink: 0;
+}
+.term-dot { width: 9px; height: 9px; border-radius: 50%; }
+.term-dot-r { background: #e05a45; }
+.term-dot-y { background: #c9a84c; }
+.term-dot-g { background: #5a8a6e; }
+#terminal-title { font-family: var(--font-ui); font-size: 11px; color: rgba(212,201,168,0.5); letter-spacing: 2px; text-transform: uppercase; margin-left: 4px; }
+#terminal-body { flex: 1; overflow-y: auto; overflow-x: hidden; padding: 14px 16px 20px; font-family: 'Courier New', 'Noto Sans Mono', monospace; font-size: 12.5px; line-height: 1.75; color: var(--terminal-txt); scroll-behavior: smooth; }
+.ornament { display: flex; align-items: center; gap: 6px; padding: 4px 0; }
+.ornament::before, .ornament::after { content: ''; flex: 1; height: 1px; background: rgba(255,255,255,0.08); }
+.ornament-diamond { width: 5px; height: 5px; background: var(--vermilion-d); transform: rotate(45deg); opacity: 0.7; }
+#content-panel { flex: 1; display: flex; flex-direction: column; overflow: hidden; position: relative; }
+#welcome-screen {
+  position: absolute; inset: 0; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 20px; background: var(--paper); z-index: 5;
+}
+.welcome-seal {
+  width: 90px; height: 90px; border: 3px solid var(--vermilion-d);
+  display: flex; align-items: center; justify-content: center; position: relative; margin-bottom: 8px;
+}
+.welcome-seal::before { content: ''; position: absolute; inset: 5px; border: 1px solid var(--vermilion); opacity: 0.4; }
+.welcome-seal-text { font-family: var(--font-serif); font-size: 32px; font-weight: 900; color: var(--vermilion-d); letter-spacing: -2px; line-height: 1; }
+.welcome-title { font-family: var(--font-serif); font-size: 28px; font-weight: 600; color: var(--ink); letter-spacing: 6px; }
+.welcome-sub { font-family: var(--font-ui); font-size: 12px; color: var(--ink-ghost); letter-spacing: 3px; text-transform: uppercase; }
+.welcome-divider { width: 60px; height: 1px; background: linear-gradient(90deg, transparent, var(--vermilion-d), transparent); }
+.welcome-hint { font-family: var(--font-body); font-size: 13px; color: var(--ink-faint); letter-spacing: 1px; }
+.welcome-examples { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
+.eg-btn {
+  padding: 7px 20px; background: transparent; border: 1px solid var(--border-mid);
+  border-radius: var(--radius); font-family: var(--font-body); font-size: 12.5px;
+  color: var(--ink-mid); cursor: pointer; text-align: left; transition: all .15s; letter-spacing: 0.3px;
+}
+.eg-btn:hover { background: var(--paper-dark); border-color: var(--vermilion-d); color: var(--vermilion-d); }
+</style>
+</head>
+<body>
+<div id="header">
+  <div id="logo">
+    <div id="logo-seal"><span>史</span></div>
+    <div id="logo-text">
+      <div id="logo-zh">史　鉴</div>
+      <div id="logo-en">HistRAG · Research Engine</div>
+    </div>
+  </div>
+  <div id="search-wrap">
+    <input id="search-input" type="text" placeholder="输入历史研究问题，按 Enter 或点击检索…" autocomplete="off">
+    <button id="search-btn" title="检索">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="22" y2="22"/></svg>
+    </button>
+  </div>
+  <div id="status-dot" title="就绪"></div>
+</div>
+<div id="app">
+  <div id="terminal-panel">
+    <div id="terminal-header">
+      <div class="term-dot term-dot-r"></div>
+      <div class="term-dot term-dot-y"></div>
+      <div class="term-dot term-dot-g"></div>
+      <span id="terminal-title">Research Console</span>
+    </div>
+    <div id="terminal-body">
+      <div class="t-line" style="color:var(--ink-ghost);font-size:11px;margin-bottom:8px">HistRAG v1.0 · 历史典籍研究引擎</div>
+      <div class="ornament"><div class="ornament-diamond"></div></div>
+      <div class="t-line" style="color:rgba(212,201,168,0.4);font-size:11px;margin-top:8px">在上面输入问题，开始检索…</div>
+    </div>
+  </div>
+  <div id="content-panel">
+    <div id="welcome-screen">
+      <div class="welcome-seal"><div class="welcome-seal-text">鉴</div></div>
+      <div class="welcome-title">史　鉴</div>
+      <div class="welcome-sub">Historical Research Intelligence</div>
+      <div class="welcome-divider"></div>
+      <div class="welcome-hint">以史为鉴，探索历史的深度与广度</div>
+      <div class="welcome-examples">
+        <button class="eg-btn">元和年间的道制变化反映了怎样的政治格局？</button>
+        <button class="eg-btn">安史之乱的起因与唐朝藩镇割据的关系</button>
+        <button class="eg-btn">《元和郡县图志》记录的全国道名称有哪些？</button>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

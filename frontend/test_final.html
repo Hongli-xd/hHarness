@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>史鉴 · HistRAG - 最终展示界面</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@300;400;500;600;700;900&family=Noto+Sans+SC:wght@300;400;500&family=ZCOOL+XiaoWei&family=Ma+Shan+Zheng&display=swap" rel="stylesheet">
+<style>
+:root {
+  --paper:        #f4efe6;
+  --paper-dark:   #ede6d8;
+  --paper-deep:   #e0d5c0;
+  --ink:          #1a1410;
+  --ink-mid:      #3d3026;
+  --ink-faint:    #7a6e5e;
+  --ink-ghost:    #b0a492;
+  --vermilion:    #c0392b;
+  --vermilion-l:  #e05a45;
+  --vermilion-d:  #962d22;
+  --gold:         #c9a84c;
+  --gold-l:       #e8c96a;
+  --celadon:      #5a8a6e;
+  --celadon-l:    #7aaa8e;
+  --border:       rgba(60,45,30,0.15);
+  --border-mid:   rgba(60,45,30,0.25);
+  --terminal-bg:  #1c1610;
+  --terminal-txt: #d4c9a8;
+  --font-serif:   'ZCOOL XiaoWei', 'Noto Serif SC', serif;
+  --font-body:    'Noto Serif SC', serif;
+  --font-ui:      'Noto Sans SC', sans-serif;
+  --radius:       4px;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; overflow: hidden; background: var(--paper); color: var(--ink); font-family: var(--font-body); }
+body::before { content: ''; position: fixed; inset: 0; z-index: 0; pointer-events: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='400' height='400' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E"); opacity: 0.6; }
+#header { position: relative; z-index: 10; display: flex; align-items: center; gap: 0; height: 52px; background: var(--ink); border-bottom: 2px solid var(--vermilion-d); padding: 0 20px; flex-shrink: 0; }
+#logo { display: flex; align-items: center; gap: 12px; margin-right: 28px; }
+#logo-seal { width: 36px; height: 36px; border: 2px solid var(--vermilion); display: flex; align-items: center; justify-content: center; position: relative; background: transparent; flex-shrink: 0; }
+#logo-seal::before { content: ''; position: absolute; inset: 3px; border: 1px solid var(--vermilion-l); opacity: 0.5; }
+#logo-seal span { font-family: var(--font-serif); font-size: 14px; font-weight: 900; color: var(--vermilion); letter-spacing: -1px; line-height: 1; }
+#logo-text { display: flex; flex-direction: column; gap: 1px; }
+#logo-zh { font-family: var(--font-serif); font-size: 17px; font-weight: 600; color: var(--paper); letter-spacing: 3px; }
+#logo-en { font-family: var(--font-ui); font-size: 9px; font-weight: 300; color: var(--ink-ghost); letter-spacing: 4px; text-transform: uppercase; }
+#search-wrap { flex: 1; max-width: 680px; margin: 0 auto; position: relative; display: flex; align-items: center; }
+#search-input { width: 100%; height: 34px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15); border-radius: 2px; padding: 0 44px 0 16px; font-family: var(--font-body); font-size: 14px; color: var(--paper); outline: none; }
+#search-btn { position: absolute; right: 0; width: 38px; height: 34px; background: var(--vermilion-d); border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; border-radius: 0 2px 2px 0; }
+#search-btn svg { width: 15px; height: 15px; fill: none; stroke: #fff; stroke-width: 2; }
+#status-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--celadon); margin-left: 16px; flex-shrink: 0; }
+#app { display: flex; height: calc(100vh - 52px); position: relative; z-index: 1; }
+#terminal-panel { width: 420px; flex-shrink: 0; display: flex; flex-direction: column; background: var(--terminal-bg); border-right: 1px solid rgba(192,57,43,0.3); overflow: hidden; }
+#terminal-header { display: flex; align-items: center; gap: 8px; padding: 8px 14px; background: rgba(255,255,255,0.04); border-bottom: 1px solid rgba(255,255,255,0.07); flex-shrink: 0; }
+.term-dot { width: 9px; height: 9px; border-radius: 50%; }
+.term-dot-r { background: #e05a45; }
+.term-dot-y { background: #c9a84c; }
+.term-dot-g { background: #5a8a6e; }
+#terminal-title { font-family: var(--font-ui); font-size: 11px; color: rgba(212,201,168,0.5); letter-spacing: 2px; text-transform: uppercase; margin-left: 4px; }
+#terminal-body { flex: 1; overflow-y: auto; padding: 14px 16px 20px; font-family: 'Courier New', monospace; font-size: 12.5px; line-height: 1.75; color: var(--terminal-txt); }
+.t-line { margin-bottom: 1px; word-break: break-all; }
+.t-prompt { color: var(--vermilion); font-weight: bold; margin-right: 6px; }
+.t-query { color: var(--gold-l); }
+.t-text { color: var(--terminal-txt); white-space: pre-wrap; }
+.t-tool-block { margin: 6px 0 2px; border-left: 2px solid var(--celadon); padding: 5px 10px; background: rgba(90,138,110,0.07); border-radius: 0 3px 3px 0; }
+.t-tool-header { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--celadon-l); margin-bottom: 3px; }
+.t-tool-badge-mode { background: rgba(201,168,76,0.18); color: var(--gold-l); border: 1px solid rgba(201,168,76,0.35); font-size: 9px; padding: 1px 6px; border-radius: 10px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; font-family: monospace; }
+.t-tool-done { display: flex; align-items: center; gap: 5px; font-size: 10.5px; color: rgba(90,138,110,0.65); margin-top: 3px; }
+.t-tool-done::before { content: "✓"; color: var(--celadon); font-weight: bold; }
+.t-view-ready { display: inline-flex; align-items: center; gap: 6px; background: rgba(201,168,76,0.12); border: 1px solid rgba(201,168,76,0.3); border-radius: 2px; padding: 4px 10px; margin: 6px 0; color: var(--gold-l); font-size: 11.5px; cursor: pointer; }
+.t-view-ready::before { content: '◆'; font-size: 9px; }
+.t-separator { border: none; border-top: 1px solid rgba(255,255,255,0.06); margin: 10px 0; }
+.ornament { display: flex; align-items: center; gap: 6px; padding: 4px 0; }
+.ornament::before, .ornament::after { content: ''; flex: 1; height: 1px; background: rgba(255,255,255,0.08); }
+.ornament-diamond { width: 5px; height: 5px; background: var(--vermilion-d); transform: rotate(45deg); opacity: 0.7; }
+#content-panel { flex: 1; display: flex; flex-direction: column; overflow: hidden; position: relative; }
+#view-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; position: relative; opacity: 1; }
+#view-tabs { display: flex; align-items: center; background: var(--paper-dark); border-bottom: 1px solid var(--border); padding: 0 16px; flex-shrink: 0; height: 36px; gap: 4px; }
+.v-tab { padding: 0 14px; height: 28px; display: flex; align-items: center; font-family: var(--font-ui); font-size: 11.5px; color: var(--ink-faint); border: 1px solid transparent; border-radius: var(--radius); cursor: pointer; transition: all .15s; letter-spacing: 0.5px; }
+.v-tab.active { color: var(--vermilion-d); border-color: var(--border-mid); background: var(--paper); font-weight: 500; }
+#view-loading { display: flex; align-items: center; gap: 6px; margin-left: auto; font-family: var(--font-ui); font-size: 11px; color: var(--ink-ghost); }
+.spin { width: 12px; height: 12px; border: 1.5px solid var(--border-mid); border-top-color: var(--vermilion); border-radius: 50%; animation: spin .7s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* 三栏布局 */
+#triple-panel { flex: 1; display: flex; overflow: hidden; }
+
+/* 地图区域 */
+#map-section { flex: 6; display: flex; flex-direction: column; overflow: hidden; border-right: 1px solid var(--border); }
+#iframe-wrap { flex: 1; position: relative; overflow: hidden; }
+#view-iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: none; background: var(--paper); }
+#cesiumContainer { width: 100%; height: 100%; background: #e8e4d8; display: flex; align-items: center; justify-content: center; }
+#cesiumContainer::before { content: '🗺️ CesiumJS 地图区域\n（支持拖拽移动和缩放）'; font-family: var(--font-ui); font-size: 14px; color: var(--ink-ghost); text-align: center; white-space: pre; }
+
+/* 时间轴区域 */
+#timeline-section { flex: 2; display: flex; flex-direction: column; overflow: hidden; border-right: 1px solid var(--border); background: var(--paper); }
+#tl-header { padding: 8px 10px; font-family: var(--font-ui); font-size: 11px; font-weight: 600; color: var(--ink-faint); border-bottom: 1px solid var(--border); flex-shrink: 0; letter-spacing: 1px; }
+#timeline-inner { flex: 1; overflow-y: auto; overflow-x: hidden; padding: 10px 8px; }
+#timeline-track { position: relative; min-height: 100%; display: flex; flex-direction: column; gap: 0; }
+#timeline-axis { position: absolute; left: 50%; top: 0; bottom: 0; width: 1px; background: var(--border-mid); transform: translateX(-50%); }
+.tl-item { display: flex; align-items: center; min-height: 36px; padding: 0 6px; cursor: pointer; }
+.tl-item:hover { background: var(--paper-dark); }
+.tl-item.sel { background: var(--paper-deep); }
+.tl-year { font-family: var(--font-ui); font-size: 10px; color: var(--ink-ghost); min-width: 32px; text-align: center; flex-shrink: 0; }
+.tl-dot { width: 8px; height: 8px; border-radius: 50%; border: 1.5px solid var(--paper); flex-shrink: 0; margin: 0 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.15); }
+.tl-label { font-family: var(--font-body); font-size: 11px; color: var(--ink-mid); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tl-item.sel .tl-label { color: var(--ink); font-weight: 500; }
+
+/* 答案面板 - 深色背景 */
+#answer-panel { flex: 2; display: flex; flex-direction: column; overflow: hidden; background: var(--paper-deep); min-height: 0; }
+#answer-panel.show { display: flex; }
+#answer-title { font-family: var(--font-serif); font-size: 11px; color: var(--ink-faint); letter-spacing: 2px; text-transform: uppercase; padding: 8px 12px; border-bottom: 1px solid var(--border); flex-shrink: 0; display: flex; align-items: center; gap: 8px; }
+#answer-title::before, #answer-title::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, transparent, var(--border-mid)); }
+#answer-title::after { background: linear-gradient(90deg, var(--border-mid), transparent); }
+#answer-content { flex: 1; overflow-y: auto; padding: 12px 16px; font-family: var(--font-body); font-size: 13px; line-height: 1.9; color: var(--ink-mid); }
+#answer-content strong { color: var(--ink); font-weight: 600; }
+#answer-content h1, #answer-content h2, #answer-content h3 { color: var(--ink); font-family: var(--font-serif); margin: 8px 0 4px; }
+#answer-content p { margin: 6px 0; }
+#answer-content ul, #answer-content ol { margin: 6px 0; padding-left: 20px; }
+#answer-content code { background: var(--paper-dark); padding: 1px 5px; border-radius: 3px; font-family: monospace; font-size: 12px; }
+#answer-content pre { background: var(--ink); color: var(--terminal-txt); padding: 10px; border-radius: 4px; overflow-x: auto; }
+</style>
+</head>
+<body>
+<div id="header">
+  <div id="logo">
+    <div id="logo-seal"><span>史</span></div>
+    <div id="logo-text">
+      <div id="logo-zh">史　鉴</div>
+      <div id="logo-en">HistRAG · Research Engine</div>
+    </div>
+  </div>
+  <div id="search-wrap">
+    <input id="search-input" type="text" value="元和年间的道制变化反映了怎样的政治格局？" autocomplete="off">
+    <button id="search-btn" title="检索">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="22" y2="22"/></svg>
+    </button>
+  </div>
+  <div id="status-dot" title="完成"></div>
+</div>
+<div id="app">
+  <div id="terminal-panel">
+    <div id="terminal-header">
+      <div class="term-dot term-dot-r"></div>
+      <div class="term-dot term-dot-y"></div>
+      <div class="term-dot term-dot-g"></div>
+      <span id="terminal-title">Research Console</span>
+    </div>
+    <div id="terminal-body">
+      <div class="ornament"><div class="ornament-diamond"></div></div>
+      <div class="t-line"><span class="t-prompt">›</span><span class="t-query">元和年间的道制变化反映了怎样的政治格局？</span></div>
+      <hr class="t-separator">
+      <div class="t-line"><div class="t-tool-block">
+        <div class="t-tool-header"><span style="color:var(--celadon-l)">⟳ rag_query</span><span class="t-tool-badge-mode">HYBRID</span></div>
+        <div class="t-tool-done">完成</div>
+      </div></div>
+      <div class="t-line"><div class="t-tool-block">
+        <div class="t-tool-header"><span style="color:var(--celadon-l)">⟳ kg_query</span></div>
+        <div class="t-tool-done">完成</div>
+      </div></div>
+      <div class="t-line"><span class="t-view-ready">联动视图已就绪，点击查看地图·时间轴</span></div>
+      <hr class="t-separator">
+      <div class="t-line"><span class="t-text">元和年间（806-820年）的道制变化深刻反映了唐朝中央与地方政治格局的演变...</span></div>
+    </div>
+  </div>
+  <div id="content-panel">
+    <div id="view-area">
+      <div id="view-tabs">
+        <div class="v-tab active">◎ 视图</div>
+        <div id="view-loading" style="display:none">
+          <div class="spin"></div>
+          <span>生成视图…</span>
+        </div>
+      </div>
+      <div id="triple-panel">
+        <div id="map-section">
+          <div id="iframe-wrap">
+            <iframe id="view-iframe" src="about:blank"></iframe>
+            <div id="cesiumContainer"></div>
+          </div>
+        </div>
+        <div id="timeline-section">
+          <div id="tl-header">时间轴</div>
+          <div id="timeline-inner">
+            <div id="timeline-track">
+              <div id="timeline-axis"></div>
+              <div class="tl-item" onclick="this.classList.toggle('sel')">
+                <span class="tl-year">755</span>
+                <div class="tl-dot" style="background:#534AB7"></div>
+                <span class="tl-label">安史之乱爆发</span>
+              </div>
+              <div class="tl-item" onclick="this.classList.toggle('sel')">
+                <span class="tl-year">763</span>
+                <div class="tl-dot" style="background:#534AB7"></div>
+                <span class="tl-label">安史之乱结束</span>
+              </div>
+              <div class="tl-item" onclick="this.classList.toggle('sel')">
+                <span class="tl-year">779</span>
+                <div class="tl-dot" style="background:#0F6E56"></div>
+                <span class="tl-label">德宗整顿藩镇</span>
+              </div>
+              <div class="tl-item" onclick="this.classList.toggle('sel')">
+                <span class="tl-year">806</span>
+                <div class="tl-dot" style="background:#0F6E56"></div>
+                <span class="tl-label">元和革新开始</span>
+              </div>
+              <div class="tl-item sel" onclick="this.classList.toggle('sel')">
+                <span class="tl-year">817</span>
+                <div class="tl-dot" style="background:#534AB7"></div>
+                <span class="tl-label">平定淮西</span>
+              </div>
+              <div class="tl-item" onclick="this.classList.toggle('sel')">
+                <span class="tl-year">820</span>
+                <div class="tl-dot" style="background:#0F6E56"></div>
+                <span class="tl-label">宪宗去世</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div id="answer-panel" class="show">
+          <div id="answer-title">研究结论</div>
+          <div id="answer-content">
+            <h2>元和年间道制变化的政治格局分析</h2>
+
+            <p><strong>一、藩镇割据与中央集权的博弈</strong></p>
+            <p>安史之乱后，唐朝在地方设立节度使，形成藩镇割据局面。元和年间，宪宗（805-820年在位）通过一系列政治和军事手段，试图重新确立中央对地方的控制。</p>
+
+            <p><strong>二、道制改革的具体措施</strong></p>
+            <ul>
+              <li>废除四道节度使，设立观察使</li>
+              <li>推行两税法，增加中央财政收入</li>
+              <li>整顿地方官员任免制度</li>
+            </ul>
+
+            <p><strong>三、政治格局的深远影响</strong></p>
+            <p>元和革新虽然在短期内加强了中央集权，但未能从根本上解决藩镇问题。这一时期的政治格局为后来的<span style="color:var(--vermilion)">牛李党争</span>和<span style="color:var(--vermilion)">宦官专权</span>埋下了伏笔。</p>
+
+            <h3>参考文献</h3>
+            <p>《旧唐书·宪宗本纪》《资治通鉴·唐纪五十五》</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>
