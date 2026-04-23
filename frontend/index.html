@@ -345,6 +345,12 @@ body::before {
 }
 .t-view-ready:hover { background: rgba(201,168,76,0.2); }
 .t-view-ready::before { content: '◆'; font-size: 9px; }
+.t-view-warn {
+  color: var(--gold-l);
+  border-left: 2px solid var(--gold);
+  padding-left: 8px; margin: 2px 0 6px;
+  font-size: 11px; opacity: 0.85;
+}
 .t-separator {
   border: none;
   border-top: 1px solid rgba(255,255,255,0.06);
@@ -627,7 +633,7 @@ body::before {
   cursor: pointer; transition: transform 0.15s;
 }
 .tl-event:hover { transform: translateX(-50%) scale(1.05); }
-.tl-event.sel .tl-dot { box-shadow: 0 0 0 3px var(--celadon-l); }
+.tl-event.sel .tl-event-dot { box-shadow: 0 0 0 3px var(--celadon-l); }
 .tl-event-dot {
   width: 14px; height: 14px; border-radius: 50%;
   border: 2px solid var(--paper);
@@ -650,6 +656,11 @@ body::before {
 .tl-event-year {
   font-family: var(--font-ui); font-size: 9px; color: var(--ink-ghost);
   margin-top: 2px;
+}
+.tl-empty {
+  position: absolute; top: 48px; left: 50%; transform: translateX(-50%);
+  font-family: var(--font-ui); font-size: 12px; color: var(--ink-ghost);
+  white-space: nowrap;
 }
 
 /* 缩放控制条 - 放在 timeline-inner 内部底部 */
@@ -1099,14 +1110,18 @@ function startQuery(q) {
         viewTag.className = 't-line';
         viewTag.innerHTML = `<span class="t-view-ready" onclick="loadView('${msg.url}')">联动视图已就绪，点击查看地图·时间轴</span>`;
         document.getElementById('terminal-body').appendChild(viewTag);
+        if (msg.warnings && msg.warnings.length > 0) {
+          termLine('<div class="t-view-warn">视图数据提示：' + escHtml(msg.warnings.join('；')) + '</div>');
+        }
         scrollTerminal();
         // 自动加载地图
         loadView(msg.url);
         // 渲染时间轴（保存在全局供 selectTimelineEvent 使用）
         console.log('[SSE] linked_view received, events:', msg.events ? msg.events.length : 0);
         if (msg.events && msg.events.length > 0) {
-          _timelineEvents = msg.events;
-          renderTimeline(msg.events);
+          _timelineAllEvents = msg.events;
+          _timelineShownCats = new Set(['mil', 'pol', 'eco', 'nat']);
+          renderTimeline(_timelineAllEvents);
         } else {
           console.warn('[SSE] no events in linked_view message');
         }
@@ -1185,12 +1200,13 @@ const CAT_COLORS = {
 };
 
 let _timelineZoom = 1;
+let _timelineAllEvents = [];
 let _timelineEvents = [];
+let _timelineShownCats = new Set(['mil', 'pol', 'eco', 'nat']);
 let _timelineBounds = { minYear: 0, maxYear: 1 };
 
 function renderTimeline(events) {
   const container = document.getElementById('timeline-container');
-  const section = document.getElementById('timeline-section');
   const inner = document.getElementById('timeline-inner');
   console.log('[renderTimeline] container:', container, 'events count:', events ? events.length : 0);
   if (!container || !events || events.length === 0) {
@@ -1198,12 +1214,21 @@ function renderTimeline(events) {
     return;
   }
 
-  // 排序
-  const sorted = [...events].sort((a, b) => a.y - b.y);
+  // 按年份排序显示，但保留原始下标用于和 iframe 内 EVENTS 对齐。
+  const sorted = events
+    .map((event, originalIndex) => ({ event, originalIndex }))
+    .filter(({ event }) => _timelineShownCats.has(event.cat || 'pol'))
+    .sort((a, b) => a.event.y - b.event.y);
   _timelineEvents = sorted;
 
+  if (sorted.length === 0) {
+    container.innerHTML = '<div id="timeline-axis"></div><div class="tl-empty">当前分类无事件</div>';
+    container.style.height = '160px';
+    return;
+  }
+
   // 计算年份范围
-  const years = sorted.map(e => e.y);
+  const years = sorted.map(({ event }) => event.y);
   const minYear = Math.min(...years);
   const maxYear = Math.max(...years);
   _timelineBounds = { minYear, maxYear };
@@ -1230,15 +1255,16 @@ function renderTimeline(events) {
   });
 
   // 事件节点（绑在轴线上）
-  sorted.forEach((e, idx) => {
+  sorted.forEach(({ event: e, originalIndex }, idx) => {
     const pos = (e.y - minYear) * baseUnitHeight;
     const color = CAT_COLORS[e.cat] || CAT_COLORS.pol;
-    const label = e.title.length > 10 ? e.title.slice(0, 10) + '…' : e.title;
+    const safeTitle = e.title || '未知事件';
+    const label = safeTitle.length > 10 ? safeTitle.slice(0, 10) + '…' : safeTitle;
     const isLeft = idx % 2 === 0;
     html += `
-      <div class="tl-event" style="top:${pos}px" data-idx="${idx}" onclick="selectTimelineEvent(${idx})">
+      <div class="tl-event" style="top:${pos}px" data-idx="${originalIndex}" onclick="selectTimelineEvent(${originalIndex})">
         <div class="tl-event-dot" style="background:${color}"></div>
-        <span class="tl-event-label ${isLeft ? 'left' : ''}">${label}</span>
+        <span class="tl-event-label ${isLeft ? 'left' : ''}">${escHtml(label)}</span>
         <span class="tl-event-year">${e.y < 0 ? '前' + Math.abs(e.y) : e.y}</span>
       </div>`;
   });
@@ -1250,20 +1276,30 @@ function renderTimeline(events) {
   console.log('[renderTimeline] done, events:', sorted.length);
 }
 
-function selectTimelineEvent(idx) {
+function setTimelineSelection(idx, notifyIframe) {
   const events = document.querySelectorAll('.tl-event');
-  events.forEach((it, i) => it.classList.toggle('sel', i === idx));
+  let selectedEl = null;
+  events.forEach(it => {
+    const isSelected = Number(it.dataset.idx) === idx;
+    it.classList.toggle('sel', isSelected);
+    if (isSelected) selectedEl = it;
+  });
 
   // 显示事件详情浮层
-  if (_timelineEvents[idx]) {
-    showEventDetail(_timelineEvents[idx], events[idx]);
+  const selectedEvent = _timelineAllEvents[idx];
+  if (selectedEvent && selectedEl) {
+    showEventDetail(selectedEvent, selectedEl);
   }
 
   // 通知 iframe
   const iframe = document.getElementById('view-iframe');
-  if (iframe && iframe.contentWindow) {
-    iframe.contentWindow.postMessage({ type: 'selectEvent', index: idx }, '*');
+  if (notifyIframe && iframe && iframe.contentWindow) {
+    iframe.contentWindow.postMessage({ type: 'selectEvent', index: idx }, window.location.origin);
   }
+}
+
+function selectTimelineEvent(idx) {
+  setTimelineSelection(idx, true);
 }
 
 const CAT_LABELS = { mil: '军事', pol: '政治', eco: '财政', nat: '灾异' };
@@ -1323,7 +1359,7 @@ function hideEventDetail() {
 // 缩放控制 - 重新计算节点位置（不改 CSS transform）
 document.getElementById('zoom-slider').addEventListener('input', function() {
   _timelineZoom = parseFloat(this.value);
-  renderTimeline(_timelineEvents); // 重新渲染，应用新间距
+  renderTimeline(_timelineAllEvents); // 重新渲染，应用新间距
 });
 
 // 点击其他地方关闭详情
@@ -1335,10 +1371,15 @@ document.addEventListener('click', function(e) {
 
 // 监听 iframe 消息
 window.addEventListener('message', e => {
-  if (e.data && e.data.type === 'eventSelected') {
-    const idx = e.data.index;
-    const items = document.querySelectorAll('.tl-event');
-    items.forEach((it, i) => it.classList.toggle('sel', i === idx));
+  if (e.origin !== window.location.origin) return;
+  const data = e.data;
+  if (data && data.type === 'eventSelected' && Number.isInteger(data.index)) {
+    setTimelineSelection(data.index, false);
+  } else if (data && data.type === 'categoryFilterChanged' && Array.isArray(data.categories)) {
+    const validCats = data.categories.filter(cat => Object.prototype.hasOwnProperty.call(CAT_COLORS, cat));
+    _timelineShownCats = new Set(validCats);
+    hideEventDetail();
+    renderTimeline(_timelineAllEvents);
   }
 });
 

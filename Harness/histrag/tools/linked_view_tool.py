@@ -1,13 +1,14 @@
-"""Linked View Tool - 联动时间轴+地图可视化工具。
+"""Linked View Tool - 历史地名地图联动视图工具。
 
 每次 RAG 回答结束后自动调用，从答案文本中提取
-时间事件和历史地名，生成左地图右时间轴的联动 HTML。
-点击时间轴事件 → 地图高亮关联地名；
-点击地图地名 → 时间轴跳转到关联事件。
+时间事件和历史地名，生成可嵌入父窗口的 Cesium 地图 HTML。
+父窗口时间轴选中事件 → 地图高亮关联地名；
+点击地图地名 → 通知父窗口跳转到关联事件。
 """
 
 from __future__ import annotations
 
+import html as html_lib
 import json
 from typing import Any
 
@@ -24,6 +25,40 @@ class LinkedEvent(BaseModel):
     category: str = Field(default="pol", description="mil/pol/eco/nat")
     place_names: list[str] = Field(default_factory=list, description="该事件关联的地名列表")
 
+    @field_validator('category', mode='before')
+    @classmethod
+    def normalize_category(cls, v):
+        aliases = {
+            "军事": "mil",
+            "战争": "mil",
+            "战役": "mil",
+            "政治": "pol",
+            "政务": "pol",
+            "制度": "pol",
+            "财政": "eco",
+            "经济": "eco",
+            "赋税": "eco",
+            "灾异": "nat",
+            "灾害": "nat",
+            "自然": "nat",
+            "天灾": "nat",
+        }
+        value = str(v or "").strip().lower()
+        value = aliases.get(value, value)
+        return value if value in {"mil", "pol", "eco", "nat"} else "pol"
+
+    @field_validator('place_names', mode='before')
+    @classmethod
+    def normalize_place_names(cls, v):
+        if v is None:
+            return []
+        if isinstance(v, str):
+            parts = v.replace("，", ",").replace("、", ",").split(",")
+            return [p.strip() for p in parts if p.strip()]
+        if isinstance(v, list):
+            return [str(p).strip() for p in v if str(p).strip()]
+        return v
+
 
 class LinkedPlace(BaseModel):
     model_config = {'extra': 'allow'}
@@ -33,6 +68,46 @@ class LinkedPlace(BaseModel):
     latitude: float = Field(description="纬度")
     place_type: str = Field(default="hist", description="cap/prov/hist/pass/battle/port/region")
     info: str = Field(default="", description="地名描述")
+
+    @field_validator('longitude')
+    @classmethod
+    def validate_longitude(cls, v):
+        if not -180 <= v <= 180:
+            raise ValueError("longitude must be between -180 and 180")
+        return v
+
+    @field_validator('latitude')
+    @classmethod
+    def validate_latitude(cls, v):
+        if not -90 <= v <= 90:
+            raise ValueError("latitude must be between -90 and 90")
+        return v
+
+    @field_validator('place_type', mode='before')
+    @classmethod
+    def normalize_place_type(cls, v):
+        aliases = {
+            "都城": "cap",
+            "首都": "cap",
+            "省": "prov",
+            "州": "prov",
+            "州郡": "prov",
+            "郡": "prov",
+            "历史地名": "hist",
+            "地名": "hist",
+            "关隘": "pass",
+            "关口": "pass",
+            "战场": "battle",
+            "战役": "battle",
+            "港口": "port",
+            "港": "port",
+            "区域": "region",
+            "地区": "region",
+        }
+        value = str(v or "").strip().lower()
+        value = aliases.get(value, value)
+        allowed = {"cap", "prov", "hist", "pass", "battle", "port", "region"}
+        return value if value in allowed else "hist"
 
 
 class LinkedViewInput(BaseModel):
@@ -44,29 +119,31 @@ class LinkedViewInput(BaseModel):
     @classmethod
     def parse_json_string(cls, v):
         if isinstance(v, str):
+            if not v.strip():
+                return []
             try:
                 return json.loads(v)
-            except json.JSONDecodeError:
-                return []
+            except json.JSONDecodeError as exc:
+                raise ValueError("events/places must be valid JSON when passed as strings") from exc
         return v
 
 
 class LinkedViewTool(BaseTool):
-    """联动历史视图工具 - 自动在每次回答后生成时间轴+地图联动页面。
+    """联动历史地图工具 - 自动在每次回答后生成可嵌入地图视图。
 
 【调用时机】
 由引擎在每次 AssistantTurnComplete 前自动注入，无需模型主动决定。
 模型只需提供从回答中提取的事件和地名数据。
 
 【功能】
-- 左侧：可缩放交互地图，标注历史地名
-- 右侧：可筛选时间轴，标注历史事件
-- 联动：点击时间轴事件 → 地图高亮关联地名
-- 联动：点击地图地名 → 时间轴跳转关联事件
+- 可缩放交互地图，标注历史地名
+- 接收父窗口时间轴 selectEvent 消息，高亮并飞到关联地名
+- 点击地图地名，向父窗口发送 eventSelected 消息
+- 父窗口负责渲染时间轴和处理时间轴跳转
 """
 
     name = "linked_view"
-    description = """从回答内容中提取时间事件和历史地名，生成联动时间轴+地图页面。
+    description = """从回答内容中提取时间事件和历史地名，生成可与父窗口时间轴联动的地图页面。
 
 【必须传入】
 - events：从回答中提取的历史事件（年份+标题+描述+类别+关联地名）
@@ -78,6 +155,10 @@ class LinkedViewTool(BaseTool):
 【事件-地名绑定】
 每个事件的 place_names 填入该事件发生地或相关地的名称列表，
 名称必须与 places 列表中的 name 一致，这样点击事件时地图才能高亮。
+
+【联动边界】
+本工具只生成地图视图 HTML；时间轴由父窗口渲染。
+父窗口可发送 selectEvent 消息选中事件，地图会回发 eventSelected 消息。
 """
     input_model = LinkedViewInput
 
@@ -90,6 +171,7 @@ class LinkedViewTool(BaseTool):
         if not arguments.events and not arguments.places:
             return ToolResult(output="No events or places provided.", is_error=True)
 
+        warnings = self._collect_warnings(arguments)
         html = self._generate_html(arguments)
 
         summary = (
@@ -97,6 +179,7 @@ class LinkedViewTool(BaseTool):
             f"{len(arguments.places)} places]\n"
             + "\n".join(f"  {e.year}: {e.title} → {e.place_names}" for e in arguments.events[:5])
             + (f"\n  ...and {len(arguments.events)-5} more" if len(arguments.events) > 5 else "")
+            + (f"\n[warnings: {len(warnings)}]" if warnings else "")
         )
 
         return ToolResult(
@@ -104,6 +187,7 @@ class LinkedViewTool(BaseTool):
             metadata={
                 "html": html,
                 "type": "linked_view",
+                "warnings": warnings,
                 "events": [
                     {
                         "y": e.year,
@@ -119,8 +203,36 @@ class LinkedViewTool(BaseTool):
 
     # ── HTML 生成 ──────────────────────────────────────────────
 
+    def _collect_warnings(self, args: LinkedViewInput) -> list[str]:
+        warnings: list[str] = []
+        place_names = [p.name for p in args.places]
+        place_name_set = set(place_names)
+
+        duplicates = sorted({name for name in place_names if place_names.count(name) > 1})
+        if duplicates:
+            warnings.append(f"Duplicate place names: {', '.join(duplicates)}")
+
+        missing = sorted(
+            {
+                name
+                for event in args.events
+                for name in event.place_names
+                if name not in place_name_set
+            }
+        )
+        if missing:
+            warnings.append(f"Event place_names not found in places: {', '.join(missing)}")
+
+        if args.events and not any(event.place_names for event in args.events):
+            warnings.append("No events are bound to places.")
+
+        return warnings
+
     def _generate_html(self, args: LinkedViewInput) -> str:
-        events_js = json.dumps(
+        def dump_js(value: Any) -> str:
+            return json.dumps(value, ensure_ascii=False).replace("</", "<\\/")
+
+        events_js = dump_js(
             [
                 {
                     "y": e.year,
@@ -131,10 +243,9 @@ class LinkedViewTool(BaseTool):
                 }
                 for e in args.events
             ],
-            ensure_ascii=False,
         )
 
-        places_js = json.dumps(
+        places_js = dump_js(
             [
                 {
                     "n": p.name,
@@ -145,7 +256,6 @@ class LinkedViewTool(BaseTool):
                 }
                 for p in args.places
             ],
-            ensure_ascii=False,
         )
 
         years = [e.year for e in args.events] if args.events else [0]
@@ -155,7 +265,7 @@ class LinkedViewTool(BaseTool):
         y_start = y_min - pad
         y_end = y_max + pad
 
-        title = args.title
+        title = html_lib.escape(args.title, quote=True)
 
         return f"""<!DOCTYPE html>
 <html lang="zh">
@@ -202,6 +312,11 @@ body {{ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   box-shadow: 0 2px 8px rgba(0,0,0,0.2);
 }}
 #map-tooltip strong {{ font-size: 13px; color: #222; display: block; margin-bottom: 2px; }}
+.map-error {{
+  margin: 16px; padding: 18px 20px; border-radius: 8px;
+  background: #fff7ed; border: 1px solid #fed7aa;
+  color: #7a3b24; font-size: 13px; line-height: 1.6;
+}}
 </style>
 </head>
 <body>
@@ -219,12 +334,9 @@ body {{ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   <div id="cesiumContainer"></div>
   <div id="map-tooltip"></div>
 </div>
-      </div>
-    </div>
-  </div>
-</div>
 
-<script src="https://cesium.com/downloads/cesiumjs/releases/1.118/Build/Cesium/Cesium.js"></script>
+<script src="https://cesium.com/downloads/cesiumjs/releases/1.118/Build/Cesium/Cesium.js"
+  onerror="document.getElementById('map-panel').innerHTML='<div class=&quot;map-error&quot;>地图资源加载失败：Cesium CDN 不可用。请检查网络，或改用本地 Cesium 静态资源。</div>'"></script>
 <script>
 // ── 数据 ────────────────────────────────────────────────────
 const EVENTS = {events_js};
@@ -250,6 +362,11 @@ function placeColor(type, hl) {{
 let shownCats = new Set(['mil','pol','eco','nat']);
 let selIdx = -1;
 let highlighted = new Set();
+const TRUSTED_ORIGIN = window.location.origin;
+
+function postToParent(payload) {{
+  window.parent.postMessage(payload, TRUSTED_ORIGIN);
+}}
 
 // ── Cesium 初始化 ────────────────────────────────────────────
 const viewer = new Cesium.Viewer('cesiumContainer', {{
@@ -266,11 +383,15 @@ const viewer = new Cesium.Viewer('cesiumContainer', {{
   navigationInstructionsInitiallyVisible: false,
 }});
 
-// 启用地形 (使用 ArcGis 在线 terrain)
-const terrainProvider = new Cesium.ArcGISTiledElevationTerrainProvider({{
-  url: 'https://elevation3d.arcgisonline.com/arcgis/rest/services/WorldElevation3D/Terrain3D/ImageServer',
-}});
-viewer.scene.terrainProvider = terrainProvider;
+// 临时在线地形 fallback：ArcGIS Online 不稳定，后续应替换为本地 DEM terrain provider。
+try {{
+  const terrainProvider = new Cesium.ArcGISTiledElevationTerrainProvider({{
+    url: 'https://elevation3d.arcgisonline.com/arcgis/rest/services/WorldElevation3D/Terrain3D/ImageServer',
+  }});
+  viewer.scene.terrainProvider = terrainProvider;
+}} catch(e) {{
+  console.warn('地形加载失败，继续使用默认椭球地形:', e);
+}}
 
 // 防止渲染错误导致崩溃
 viewer.scene.maximumRenderTimeChange = Infinity;
@@ -317,7 +438,16 @@ viewer.camera.setView({{
 
 // ── 地名标注 ────────────────────────────────────────────────
 const placeEntities = {{}};
+function isValidPlace(p) {{
+  return p && Number.isFinite(p.lo) && Number.isFinite(p.la)
+    && p.lo >= -180 && p.lo <= 180 && p.la >= -90 && p.la <= 90;
+}}
+
 PLACES.forEach(p => {{
+  if (!isValidPlace(p)) {{
+    console.warn('跳过无效地名坐标:', p);
+    return;
+  }}
   const isHL = highlighted.has(p.n);
   const color = placeColor(p.t, isHL);
   const pinSize = p.t === 'cap' ? 12 : p.t === 'prov' ? 9 : 7;
@@ -347,12 +477,21 @@ PLACES.forEach(p => {{
     }},
     _placeData: p,
   }});
-  placeEntities[p.n] = entity;
+  if (!placeEntities[p.n]) placeEntities[p.n] = [];
+  placeEntities[p.n].push(entity);
 }});
 
 // ── 点击地名 → 时间轴联动 ──────────────────────────────────
 const handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
 const tooltip = document.getElementById('map-tooltip');
+
+function setTooltipContent(place) {{
+  tooltip.replaceChildren();
+  const name = document.createElement('strong');
+  name.textContent = place.n || '';
+  tooltip.appendChild(name);
+  if (place.i) tooltip.appendChild(document.createTextNode(place.i));
+}}
 
 handler.setInputAction(movement => {{
   const picked = viewer.scene.pick(movement.position);
@@ -367,9 +506,7 @@ handler.setInputAction(movement => {{
   if (Cesium.defined(picked) && Cesium.defined(picked.id) && picked.id._placeData) {{
     const p = picked.id._placeData;
     tooltip.style.display = 'block';
-    tooltip.innerHTML = `<strong>${{p.n}}</strong>${{p.i || ''}}`;
-    const mp = document.getElementById('map-panel');
-    const r = mp.getBoundingClientRect();
+    setTooltipContent(p);
     tooltip.style.left = (movement.endPosition.x + 14) + 'px';
     tooltip.style.top  = (movement.endPosition.y - 40) + 'px';
   }} else {{
@@ -381,20 +518,21 @@ handler.setInputAction(movement => {{
 function setHighlightedPlaces(names) {{
   highlighted = new Set(names);
   PLACES.forEach(p => {{
-    const ent = placeEntities[p.n];
-    if (!ent) return;
+    const entities = placeEntities[p.n] || [];
     const hl = highlighted.has(p.n);
     const color = placeColor(p.t, hl);
-    ent.point.color = color;
-    ent.point.pixelSize = hl ? 14 : (p.t==='cap' ? 12 : p.t==='prov' ? 9 : 7);
-    ent.label.fillColor = color;
-    ent.label.font = hl ? 'bold 14px sans-serif' : (p.t==='cap' ? 'bold 13px sans-serif' : '11px sans-serif');
+    entities.forEach(ent => {{
+      ent.point.color = color;
+      ent.point.pixelSize = hl ? 14 : (p.t==='cap' ? 12 : p.t==='prov' ? 9 : 7);
+      ent.label.fillColor = color;
+      ent.label.font = hl ? 'bold 14px sans-serif' : (p.t==='cap' ? 'bold 13px sans-serif' : '11px sans-serif');
+    }});
   }});
 }}
 
 // ── 飞到地名 ────────────────────────────────────────────────
 function focusPlace(name) {{
-  const p = PLACES.find(p => p.n === name);
+  const p = PLACES.find(p => p.n === name && isValidPlace(p));
   if (!p) return;
   viewer.camera.flyTo({{
     destination: Cesium.Cartesian3.fromDegrees(p.lo, p.la, 800000),
@@ -412,28 +550,44 @@ function onPlaceClick(name) {{
 }}
 
 // ── 选中事件 → 通知父窗口更新时间轴 ──────────────────────────
+function isValidEventIndex(idx) {{
+  return Number.isInteger(idx) && idx >= 0 && idx < EVENTS.length;
+}}
+
 function pickEvent(idx) {{
+  if (!isValidEventIndex(idx)) return;
   selIdx = idx;
   const e = EVENTS[idx];
   setHighlightedPlaces(e.places || []);
   // 通知父窗口选中事件
-  window.parent.postMessage({{ type: 'eventSelected', index: idx, event: e }}, '*');
+  postToParent({{ type: 'eventSelected', index: idx, event: e }});
   // 飞到第一个相关地名
   if (e.places && e.places.length > 0) focusPlace(e.places[0]);
 }}
 
+function notifyCategoryFilterChanged() {{
+  postToParent({{
+    type: 'categoryFilterChanged',
+    categories: Array.from(shownCats),
+  }});
+}}
+
 function toggleCat(cat, btn) {{
+  if (!Object.prototype.hasOwnProperty.call(CAT, cat)) return;
   if (shownCats.has(cat)) {{ shownCats.delete(cat); btn.className = 'tb'; }}
   else {{ shownCats.add(cat); btn.className = `tb on-${{cat}}`; }}
   selIdx = -1;
   setHighlightedPlaces([]);
+  notifyCategoryFilterChanged();
 }}
 
 // ── 监听父窗口消息 ──────────────────────────────────────────
 window.addEventListener('message', e => {{
-  if (e.data && e.data.type === 'selectEvent' && typeof e.data.index === 'number') {{
+  if (e.origin !== TRUSTED_ORIGIN) return;
+  const data = e.data;
+  if (data && data.type === 'selectEvent' && isValidEventIndex(data.index)) {{
     // 父窗口时间轴选中事件 → 同步高亮地图地名
-    pickEvent(e.data.index);
+    pickEvent(data.index);
   }}
 }});
 </script>

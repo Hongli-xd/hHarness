@@ -265,11 +265,17 @@ class AgentEngine:
         from ..api import ApiMessageRequest
 
         # ── 截断答案，控制 context 长度，避免 MiniMax 超时断连 ──
-        # 保留前 1500 字符足够提取事件和地名
-        MAX_ANSWER_CHARS = 1500
-        truncated_answer = answer_text[:MAX_ANSWER_CHARS]
+        # 保留首尾片段，避免长回答后半部分的事件和地名完全丢失。
+        MAX_ANSWER_CHARS = 2000
+        EDGE_CHARS = MAX_ANSWER_CHARS // 2
         if len(answer_text) > MAX_ANSWER_CHARS:
-            truncated_answer += "\n...(省略)"
+            truncated_answer = (
+                answer_text[:EDGE_CHARS]
+                + "\n...(中间省略)...\n"
+                + answer_text[-EDGE_CHARS:]
+            )
+        else:
+            truncated_answer = answer_text
 
         extraction_prompt = (
             "根据以下历史研究问题和回答，调用 linked_view 工具提取结构化数据。\n\n"
@@ -297,7 +303,9 @@ class AgentEngine:
         tool_name = ""
         tool_input: dict = {}
 
-        # ── 超时保护：最多等待 60 秒，失败静默返回不影响主流程 ──
+        # ── 超时保护：失败静默返回不影响主流程 ──
+        # linked_view 是附加视图，不能让最终答案后处理长时间阻塞。
+        EXTRACTION_TIMEOUT_SECONDS = 25.0
         MAX_RETRIES = 2
         for attempt in range(MAX_RETRIES):
             try:
@@ -308,7 +316,7 @@ class AgentEngine:
                             tool_name = event.name
                             tool_input = event.input or {}
 
-                await asyncio.wait_for(_stream(), timeout=60.0)
+                await asyncio.wait_for(_stream(), timeout=EXTRACTION_TIMEOUT_SECONDS)
                 break  # 成功则跳出重试循环
 
             except asyncio.TimeoutError:
