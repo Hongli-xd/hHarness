@@ -30,38 +30,25 @@
   --border-mid:   rgba(60,45,30,0.25);
   --shadow:       rgba(20,12,5,0.12);
   --shadow-deep:  rgba(20,12,5,0.22);
-
   --panel-bg:     rgba(244,239,230,0.92);
   --terminal-bg:  #1c1610;
   --terminal-txt: #d4c9a8;
-
   --radius:       4px;
   --font-serif:   'ZCOOL XiaoWei', 'Noto Serif SC', serif;
   --font-body:    'Noto Serif SC', serif;
   --font-ui:      'Noto Sans SC', sans-serif;
+  --terminal-w:   450px;
+  --answer-w:     900px;
 }
 
-/* ══════════════════════════════════════════════════
-   基础重置
-══════════════════════════════════════════════════ */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; overflow: hidden; background: var(--paper); color: var(--ink); font-family: var(--font-body); }
 
-html, body {
-  height: 100%;
-  overflow: hidden;
-  background: var(--paper);
-  color: var(--ink);
-  font-family: var(--font-body);
-}
-
-/* ══════════════════════════════════════════════════
-   纸张纹理背景
-══════════════════════════════════════════════════ */
+/* 纸张纹理背景 */
 body::before {
   content: '';
   position: fixed; inset: 0; z-index: 0; pointer-events: none;
-  background-image:
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='400' height='400' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='400' height='400' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
   opacity: 0.6;
 }
 
@@ -71,380 +58,166 @@ body::before {
 #header {
   position: relative; z-index: 10;
   display: flex; align-items: center; gap: 0;
-  height: 52px;
+  height: 48px;
   background: var(--ink);
   border-bottom: 2px solid var(--vermilion-d);
-  padding: 0 20px;
+  padding: 0 16px;
   flex-shrink: 0;
 }
 
-/* 印章 logo */
 #logo {
-  display: flex; align-items: center; gap: 12px;
-  margin-right: 28px;
+  display: flex; align-items: center; gap: 10px;
+  margin-right: 20px;
+  flex-shrink: 0;
 }
 #logo-seal {
-  width: 36px; height: 36px;
+  width: 32px; height: 32px;
   border: 2px solid var(--vermilion);
   display: flex; align-items: center; justify-content: center;
   position: relative;
-  background: transparent;
-  flex-shrink: 0;
+  background: transparent; flex-shrink: 0;
 }
 #logo-seal::before {
   content: '';
   position: absolute; inset: 3px;
-  border: 1px solid var(--vermilion-l);
-  opacity: 0.5;
+  border: 1px solid var(--vermilion-l); opacity: 0.5;
 }
-#logo-seal span {
-  font-family: var(--font-serif);
-  font-size: 14px; font-weight: 900;
-  color: var(--vermilion);
-  letter-spacing: -1px;
-  line-height: 1;
-}
-#logo-text {
-  display: flex; flex-direction: column; gap: 1px;
-}
-#logo-zh {
-  font-family: var(--font-serif);
-  font-size: 17px; font-weight: 600;
-  color: var(--paper);
-  letter-spacing: 3px;
-}
-#logo-en {
-  font-family: var(--font-ui);
-  font-size: 9px; font-weight: 300;
-  color: var(--ink-ghost);
-  letter-spacing: 4px;
-  text-transform: uppercase;
-}
+#logo-seal span { font-family: var(--font-serif); font-size: 13px; font-weight: 900; color: var(--vermilion); letter-spacing: -1px; line-height: 1; }
+#logo-text { display: flex; flex-direction: column; gap: 1px; }
+#logo-zh { font-family: var(--font-serif); font-size: 15px; font-weight: 600; color: var(--paper); letter-spacing: 3px; }
+#logo-en { font-family: var(--font-ui); font-size: 9px; font-weight: 300; color: var(--ink-ghost); letter-spacing: 4px; text-transform: uppercase; }
 
-/* 顶部搜索框 */
-#search-wrap {
-  flex: 1; max-width: 680px; margin: 0 auto;
-  position: relative;
-  display: flex; align-items: center;
-}
-
+/* 搜索框 */
+#search-wrap { flex: 1; max-width: 600px; margin: 0 auto; position: relative; display: flex; align-items: center; }
 #search-input {
-  width: 100%;
-  height: 34px;
+  width: 100%; height: 32px;
   background: rgba(255,255,255,0.06);
-  border: 1px solid rgba(255,255,255,0.15);
-  border-radius: 2px;
-  padding: 0 44px 0 16px;
-  font-family: var(--font-body);
-  font-size: 14px;
-  color: var(--paper);
-  outline: none;
-  transition: border-color .2s, background .2s;
-  letter-spacing: 0.5px;
+  border: 1px solid rgba(255,255,255,0.15); border-radius: 2px;
+  padding: 0 40px 0 14px;
+  font-family: var(--font-body); font-size: 13px; color: var(--paper); outline: none;
+  transition: border-color .2s, background .2s; letter-spacing: 0.5px;
 }
-#search-input::placeholder { color: var(--ink-ghost); font-size: 13px; }
-#search-input:focus {
-  border-color: var(--vermilion);
-  background: rgba(255,255,255,0.09);
-}
-
+#search-input::placeholder { color: var(--ink-ghost); font-size: 12px; }
+#search-input:focus { border-color: var(--vermilion); background: rgba(255,255,255,0.09); }
 #search-btn {
-  position: absolute; right: 0;
-  width: 38px; height: 34px;
-  background: var(--vermilion-d);
-  border: none; cursor: pointer;
+  position: absolute; right: 0; width: 36px; height: 32px;
+  background: var(--vermilion-d); border: none; cursor: pointer;
   display: flex; align-items: center; justify-content: center;
-  transition: background .15s;
-  border-radius: 0 2px 2px 0;
+  transition: background .15s; border-radius: 0 2px 2px 0;
 }
 #search-btn:hover { background: var(--vermilion); }
-#search-btn svg { width: 15px; height: 15px; fill: none; stroke: #fff; stroke-width: 2; }
+#search-btn svg { width: 14px; height: 14px; fill: none; stroke: #fff; stroke-width: 2; }
 
-/* 状态指示器 */
-#status-dot {
-  width: 7px; height: 7px; border-radius: 50%;
-  background: var(--ink-ghost);
-  margin-left: 16px; flex-shrink: 0;
-  transition: background .3s;
-}
+#header-right { display: flex; align-items: center; gap: 12px; margin-left: 16px; }
+#status-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--ink-ghost); transition: background .3s; }
 #status-dot.running { background: var(--gold); animation: pulse 1s infinite; }
 #status-dot.done    { background: var(--celadon); }
 #status-dot.error   { background: var(--vermilion); }
-
-@keyframes pulse {
-  0%,100% { opacity: 1; }
-  50%      { opacity: 0.3; }
-}
+@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
 
 /* ══════════════════════════════════════════════════
-   主体布局：左终端 | 右面板（地图+时间轴）
+   主体布局
 ══════════════════════════════════════════════════ */
 #app {
   display: flex;
-  height: calc(100vh - 52px);
+  height: calc(100vh - 48px);
   position: relative; z-index: 1;
 }
 
 /* ── 左侧终端面板 ── */
 #terminal-panel {
-  width: 420px; flex-shrink: 0;
+  width: var(--terminal-w); flex-shrink: 0;
   display: flex; flex-direction: column;
   background: var(--terminal-bg);
   border-right: 1px solid rgba(192,57,43,0.3);
-  position: relative;
-  overflow: hidden;
+  position: relative; overflow: hidden;
+  transition: width .2s;
 }
+#terminal-panel.collapsed { width: 32px; }
+#terminal-panel.collapsed #terminal-body,
+#terminal-panel.collapsed #terminal-header { display: none; }
+#terminal-panel.collapsed #collapse-btn { writing-mode: vertical-rl; padding: 12px 8px; }
 
 #terminal-header {
   display: flex; align-items: center; gap: 8px;
-  padding: 8px 14px;
+  padding: 7px 12px;
   background: rgba(255,255,255,0.04);
   border-bottom: 1px solid rgba(255,255,255,0.07);
   flex-shrink: 0;
 }
-.term-dot {
-  width: 9px; height: 9px; border-radius: 50%;
-}
+.term-dot { width: 8px; height: 8px; border-radius: 50%; }
 .term-dot-r { background: #e05a45; }
 .term-dot-y { background: #c9a84c; }
 .term-dot-g { background: #5a8a6e; }
-#terminal-title {
-  font-family: var(--font-ui);
-  font-size: 11px; color: rgba(212,201,168,0.5);
-  letter-spacing: 2px; text-transform: uppercase;
-  margin-left: 4px;
+#terminal-title { font-family: var(--font-ui); font-size: 10px; color: rgba(212,201,168,0.5); letter-spacing: 2px; text-transform: uppercase; margin-left: 4px; flex: 1; }
+#collapse-btn {
+  width: 18px; height: 18px; border-radius: 2px;
+  background: rgba(255,255,255,0.06); border: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  color: rgba(212,201,168,0.4); font-size: 10px;
+  transition: background .15s, color .15s;
 }
+#collapse-btn:hover { background: rgba(255,255,255,0.12); color: rgba(212,201,168,0.8); }
 
 #terminal-body {
   flex: 1; overflow-y: auto; overflow-x: hidden;
-  padding: 14px 16px 20px;
+  padding: 12px 14px 20px;
   font-family: 'Courier New', 'Noto Sans Mono', monospace;
-  font-size: 12.5px;
-  line-height: 1.75;
-  color: var(--terminal-txt);
+  font-size: 12px; line-height: 1.75; color: var(--terminal-txt);
   scroll-behavior: smooth;
 }
-#terminal-body::-webkit-scrollbar { width: 4px; }
+#terminal-body::-webkit-scrollbar { width: 3px; }
 #terminal-body::-webkit-scrollbar-track { background: transparent; }
 #terminal-body::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
 
-/* 终端输出类型 */
 .t-line { margin-bottom: 1px; word-break: break-all; }
 .t-prompt { color: var(--vermilion); font-weight: bold; margin-right: 6px; }
 .t-query  { color: var(--gold-l); }
 .t-text   { color: var(--terminal-txt); white-space: pre-wrap; }
-.t-tool-block {
-  margin: 6px 0 2px;
-  border-left: 2px solid var(--celadon);
-  padding: 5px 10px;
-  background: rgba(90,138,110,0.07);
-  border-radius: 0 3px 3px 0;
-}
-.t-tool-header {
-  display: flex; align-items: center; gap: 6px;
-  font-size: 11px; color: var(--celadon-l);
-  font-weight: 500; letter-spacing: 0.5px;
-  margin-bottom: 3px;
-}
-.t-tool-badge {
-  font-size: 9px; padding: 1px 6px; border-radius: 10px;
-  font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase;
-  font-family: monospace;
-}
-.t-tool-badge-mode {
-  background: rgba(201,168,76,0.18);
-  color: var(--gold-l);
-  border: 1px solid rgba(201,168,76,0.35);
-}
-.t-tool-query {
-  font-size: 11.5px;
-  color: #f0a050;
-  font-style: italic;
-  line-height: 1.5;
-  padding: 2px 0;
-  white-space: pre-wrap; word-break: break-all;
-}
+.t-tool-block { margin: 5px 0 2px; border-left: 2px solid var(--celadon); padding: 4px 8px; background: rgba(90,138,110,0.07); border-radius: 0 3px 3px 0; }
+.t-tool-header { display: flex; align-items: center; gap: 5px; font-size: 10px; color: var(--celadon-l); font-weight: 500; letter-spacing: 0.5px; margin-bottom: 2px; }
+.t-tool-badge { font-size: 8px; padding: 1px 5px; border-radius: 10px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; font-family: monospace; }
+.t-tool-badge-mode { background: rgba(201,168,76,0.18); color: var(--gold-l); border: 1px solid rgba(201,168,76,0.35); }
+.t-tool-query { font-size: 11px; color: #f0a050; font-style: italic; line-height: 1.5; padding: 1px 0; white-space: pre-wrap; word-break: break-all; }
 .t-tool-query::before { content: '"'; color: rgba(240,160,80,0.5); margin-right: 1px; }
 .t-tool-query::after  { content: '"'; color: rgba(240,160,80,0.5); margin-left: 1px; }
-.t-tool-done {
-  display: flex; align-items: center; gap: 5px;
-  font-size: 10.5px; color: rgba(90,138,110,0.65);
-  margin-top: 3px;
-}
+.t-tool-done { display: flex; align-items: center; gap: 4px; font-size: 10px; color: rgba(90,138,110,0.65); margin-top: 2px; }
 .t-tool-done::before { content: "✓"; color: var(--celadon); font-weight: bold; }
-.t-tool-end {
-  color: rgba(90,138,110,0.7);
-  border-left: 2px solid rgba(90,138,110,0.4);
-  padding-left: 8px; margin-bottom: 4px;
-  font-size: 11px;
-}
-
-/* ══ 等待画面 ══ */
-#view-pending {
-  position: absolute; inset: 0;
-  display: none; align-items: center; justify-content: center;
-  background: var(--paper); z-index: 4;
-}
-#view-pending.show { display: flex; pointer-events: all; }
-.vp-inner { display: flex; flex-direction: column; align-items: center; gap: 16px; user-select: none; }
-.vp-brush { width: 80px; height: 80px; opacity: 0.85; }
-.vp-brush svg { width: 100%; height: 100%; }
-.vp-stroke { stroke-dasharray: 200; stroke-dashoffset: 200; animation: brush-write 2.4s ease-in-out infinite; }
-.vp-stroke.s1 { animation-delay: 0s;    stroke-dasharray: 110; stroke-dashoffset: 110; }
-.vp-stroke.s2 { animation-delay: 0.3s;  stroke-dasharray: 90;  stroke-dashoffset: 90; }
-.vp-stroke.s3 { animation-delay: 0.55s; stroke-dasharray: 95;  stroke-dashoffset: 95; }
-.vp-stroke.s4 { animation-delay: 0.8s;  stroke-dasharray: 70;  stroke-dashoffset: 70; }
-.vp-stroke.s5 { animation-delay: 1.0s;  stroke-dasharray: 68;  stroke-dashoffset: 68; }
-@keyframes brush-write {
-  0%   { stroke-dashoffset: var(--dash,200); opacity: 0; }
-  8%   { opacity: 1; }
-  55%  { stroke-dashoffset: 0; opacity: 1; }
-  80%  { stroke-dashoffset: 0; opacity: 0.6; }
-  100% { stroke-dashoffset: 0; opacity: 0.2; }
-}
-.vp-seal {
-  width: 42px; height: 42px; border: 2px solid var(--vermilion-d);
-  display: flex; align-items: center; justify-content: center;
-  font-family: var(--font-serif); font-size: 20px; font-weight: 900;
-  color: var(--vermilion-d); position: relative;
-  animation: seal-pulse 2.4s ease-in-out infinite;
-}
-.vp-seal::before { content:''; position:absolute; inset:3px; border:1px solid var(--vermilion); opacity:0.3; }
-@keyframes seal-pulse {
-  0%,100% { opacity:0.5; transform:scale(0.96); }
-  50%      { opacity:1;   transform:scale(1.02); }
-}
-.vp-dots { display:flex; gap:6px; align-items:center; }
-.vp-dot {
-  width:5px; height:5px; border-radius:50%; background:var(--vermilion-d);
-  animation:dot-bounce 1.4s ease-in-out infinite; opacity:0.7;
-}
-.vp-dot:nth-child(2) { animation-delay:0.2s; background:var(--gold); }
-.vp-dot:nth-child(3) { animation-delay:0.4s; }
-@keyframes dot-bounce {
-  0%,80%,100% { transform:translateY(0);   opacity:0.4; }
-  40%          { transform:translateY(-6px); opacity:1; }
-}
-.vp-text  { font-family:var(--font-serif); font-size:13px; color:var(--ink-faint); letter-spacing:2px; }
-.vp-phase { font-family:var(--font-ui); font-size:11px; color:var(--ink-ghost); letter-spacing:1px; min-height:16px; transition:opacity .4s; }
-.t-tool-err {
-  color: var(--vermilion-l);
-  border-left: 2px solid var(--vermilion);
-  padding-left: 8px; margin: 4px 0;
-}
-.t-view-ready {
-  display: inline-flex; align-items: center; gap: 6px;
-  background: rgba(201,168,76,0.12);
-  border: 1px solid rgba(201,168,76,0.3);
-  border-radius: 2px;
-  padding: 4px 10px; margin: 6px 0;
-  color: var(--gold-l);
-  font-size: 11.5px;
-  cursor: pointer;
-  transition: background .15s;
-}
+.t-tool-end { color: rgba(90,138,110,0.7); border-left: 2px solid rgba(90,138,110,0.4); padding-left: 8px; margin-bottom: 4px; font-size: 10px; }
+.t-tool-err { color: var(--vermilion-l); border-left: 2px solid var(--vermilion); padding-left: 8px; margin: 4px 0; }
+.t-view-ready { display: inline-flex; align-items: center; gap: 5px; background: rgba(201,168,76,0.12); border: 1px solid rgba(201,168,76,0.3); border-radius: 2px; padding: 3px 8px; margin: 5px 0; color: var(--gold-l); font-size: 10.5px; cursor: pointer; transition: background .15s; }
 .t-view-ready:hover { background: rgba(201,168,76,0.2); }
-.t-view-ready::before { content: '◆'; font-size: 9px; }
-.t-separator {
-  border: none;
-  border-top: 1px solid rgba(255,255,255,0.06);
-  margin: 10px 0;
-}
-.t-cursor {
-  display: inline-block; width: 7px; height: 13px;
-  background: var(--terminal-txt); vertical-align: text-bottom;
-  animation: blink 1s step-end infinite;
-  margin-left: 2px;
-}
+.t-view-ready::before { content: '◆'; font-size: 8px; }
+.t-separator { border: none; border-top: 1px solid rgba(255,255,255,0.06); margin: 8px 0; }
+.t-cursor { display: inline-block; width: 6px; height: 12px; background: var(--terminal-txt); vertical-align: text-bottom; animation: blink 1s step-end infinite; margin-left: 2px; }
 @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
 
 /* ── 右侧内容面板 ── */
 #content-panel {
   flex: 1; display: flex; flex-direction: column;
-  overflow: hidden;
-  position: relative;
+  overflow: hidden; position: relative;
 }
 
 /* 欢迎屏 */
 #welcome-screen {
   position: absolute; inset: 0;
-  display: flex; flex-direction: column;
-  align-items: center; justify-content: center;
-  gap: 20px;
-  background: var(--paper);
-  z-index: 5;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px;
+  background: var(--paper); z-index: 5;
   transition: opacity .4s, transform .4s;
 }
-#welcome-screen.hidden {
-  opacity: 0; pointer-events: none; transform: translateY(-8px);
-}
+#welcome-screen.hidden { opacity: 0; pointer-events: none; transform: translateY(-8px); }
+.welcome-seal { width: 80px; height: 80px; border: 3px solid var(--vermilion-d); display: flex; align-items: center; justify-content: center; position: relative; margin-bottom: 6px; }
+.welcome-seal::before { content: ''; position: absolute; inset: 5px; border: 1px solid var(--vermilion); opacity: 0.4; }
+.welcome-seal-text { font-family: var(--font-serif); font-size: 30px; font-weight: 900; color: var(--vermilion-d); letter-spacing: -2px; line-height: 1; }
+.welcome-title { font-family: var(--font-serif); font-size: 26px; font-weight: 600; color: var(--ink); letter-spacing: 6px; }
+.welcome-sub { font-family: var(--font-ui); font-size: 11px; color: var(--ink-ghost); letter-spacing: 3px; text-transform: uppercase; }
+.welcome-divider { width: 50px; height: 1px; background: linear-gradient(90deg, transparent, var(--vermilion-d), transparent); }
+.welcome-hint { font-family: var(--font-body); font-size: 12px; color: var(--ink-faint); letter-spacing: 1px; }
+.welcome-examples { display: flex; flex-direction: column; gap: 5px; margin-top: 6px; }
+.eg-btn { padding: 6px 18px; background: transparent; border: 1px solid var(--border-mid); border-radius: var(--radius); font-family: var(--font-body); font-size: 12px; color: var(--ink-mid); cursor: pointer; text-align: left; transition: all .15s; letter-spacing: 0.3px; }
+.eg-btn:hover { background: var(--paper-dark); border-color: var(--vermilion-d); color: var(--vermilion-d); }
 
-.welcome-seal {
-  width: 90px; height: 90px;
-  border: 3px solid var(--vermilion-d);
-  display: flex; align-items: center; justify-content: center;
-  position: relative;
-  margin-bottom: 8px;
-}
-.welcome-seal::before {
-  content: '';
-  position: absolute; inset: 5px;
-  border: 1px solid var(--vermilion);
-  opacity: 0.4;
-}
-.welcome-seal-text {
-  font-family: var(--font-serif);
-  font-size: 32px; font-weight: 900;
-  color: var(--vermilion-d);
-  letter-spacing: -2px;
-  line-height: 1;
-}
-
-.welcome-title {
-  font-family: var(--font-serif);
-  font-size: 28px; font-weight: 600;
-  color: var(--ink);
-  letter-spacing: 6px;
-}
-.welcome-sub {
-  font-family: var(--font-ui);
-  font-size: 12px; color: var(--ink-ghost);
-  letter-spacing: 3px;
-  text-transform: uppercase;
-}
-.welcome-divider {
-  width: 60px; height: 1px;
-  background: linear-gradient(90deg, transparent, var(--vermilion-d), transparent);
-}
-.welcome-hint {
-  font-family: var(--font-body);
-  font-size: 13px; color: var(--ink-faint);
-  letter-spacing: 1px;
-}
-
-/* 查询示例 */
-.welcome-examples {
-  display: flex; flex-direction: column; gap: 6px;
-  margin-top: 8px;
-}
-.eg-btn {
-  padding: 7px 20px;
-  background: transparent;
-  border: 1px solid var(--border-mid);
-  border-radius: var(--radius);
-  font-family: var(--font-body);
-  font-size: 12.5px; color: var(--ink-mid);
-  cursor: pointer; text-align: left;
-  transition: all .15s;
-  letter-spacing: 0.3px;
-}
-.eg-btn:hover {
-  background: var(--paper-dark);
-  border-color: var(--vermilion-d);
-  color: var(--vermilion-d);
-}
-
-/* 三栏视图区 */
+/* 视图区 */
 #view-area {
   flex: 1; display: flex; flex-direction: column;
   overflow: hidden; position: relative;
@@ -457,346 +230,475 @@ body::before {
   display: flex; align-items: center;
   background: var(--paper-dark);
   border-bottom: 1px solid var(--border);
-  padding: 0 16px;
-  flex-shrink: 0; height: 36px;
-  gap: 4px;
+  padding: 0 12px;
+  flex-shrink: 0; height: 34px; gap: 4px;
 }
 .v-tab {
-  padding: 0 14px; height: 28px;
+  padding: 0 12px; height: 26px;
   display: flex; align-items: center;
-  font-family: var(--font-ui);
-  font-size: 11.5px; color: var(--ink-faint);
-  border: 1px solid transparent;
-  border-radius: var(--radius);
-  cursor: pointer; transition: all .15s;
-  letter-spacing: 0.5px;
+  font-family: var(--font-ui); font-size: 11px; color: var(--ink-faint);
+  border: 1px solid transparent; border-radius: var(--radius);
+  cursor: pointer; transition: all .15s; letter-spacing: 0.5px;
 }
 .v-tab:hover { color: var(--ink-mid); }
-.v-tab.active {
-  color: var(--vermilion-d);
-  border-color: var(--border-mid);
-  background: var(--paper);
-  font-weight: 500;
-}
-#view-loading {
-  display: none; align-items: center; gap: 6px;
-  margin-left: auto;
-  font-family: var(--font-ui);
-  font-size: 11px; color: var(--ink-ghost);
-}
+.v-tab.active { color: var(--vermilion-d); border-color: var(--border-mid); background: var(--paper); font-weight: 500; }
+#view-loading { display: none; align-items: center; gap: 5px; margin-left: auto; font-family: var(--font-ui); font-size: 10px; color: var(--ink-ghost); }
 #view-loading.show { display: flex; }
-.spin {
-  width: 12px; height: 12px;
-  border: 1.5px solid var(--border-mid);
-  border-top-color: var(--vermilion);
-  border-radius: 50%;
-  animation: spin .7s linear infinite;
-}
+.spin { width: 11px; height: 11px; border: 1.5px solid var(--border-mid); border-top-color: var(--vermilion); border-radius: 50%; animation: spin .7s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* 三栏布局：地图 | 时间轴 | 答案 */
+/* ══════════════════════════════════════════════════
+   三栏布局：地图+时间轴 | 答案
+   中央区域用垂直分割：地图(上) + 时间轴(下)
+══════════════════════════════════════════════════ */
 #triple-panel {
-  flex: 1; display: flex; overflow: hidden;
+  flex: 1; display: flex; overflow: hidden; position: relative;
+}
+
+/* 地图+时间轴组合列 */
+#map-tl-column {
+  flex: 1; display: flex; flex-direction: column;
+  overflow: hidden;
+  border-right: 1px solid var(--border);
+  min-width: 0;
 }
 
 /* 地图区域 */
 #map-section {
-  flex: 6; display: flex; flex-direction: column; overflow: hidden;
-  border-right: 1px solid var(--border);
+  flex: 1; display: flex; flex-direction: column; overflow: hidden;
+  position: relative;
+  min-height: 0;
 }
 
-/* 时间轴区域 */
+/* 地图控制栏 */
+#map-toolbar {
+  display: flex; align-items: center; gap: 6px;
+  padding: 5px 10px;
+  background: var(--paper-dark);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  z-index: 2;
+}
+.map-ctrl-btn {
+  height: 22px; padding: 0 8px;
+  display: flex; align-items: center; gap: 4px;
+  font-family: var(--font-ui); font-size: 10px; color: var(--ink-mid);
+  background: var(--paper); border: 1px solid var(--border-mid);
+  border-radius: 2px; cursor: pointer; transition: all .15s;
+  white-space: nowrap;
+}
+.map-ctrl-btn:hover { border-color: var(--vermilion); color: var(--vermilion-d); }
+.map-ctrl-btn.active { border-color: var(--vermilion-d); color: var(--vermilion-d); background: rgba(192,57,43,0.06); font-weight: 500; }
+.map-sep { width: 1px; height: 16px; background: var(--border); }
+#map-error-badge {
+  display: none; align-items: center; gap: 4px;
+  margin-left: auto;
+  font-family: var(--font-ui); font-size: 10px; color: var(--vermilion-l);
+  background: rgba(192,57,43,0.08); border: 1px solid rgba(192,57,43,0.2);
+  border-radius: 2px; padding: 0 6px; height: 20px;
+}
+#map-error-badge.show { display: flex; }
+#map-retry-btn {
+  font-size: 9px; cursor: pointer; color: var(--vermilion);
+  border-bottom: 1px solid rgba(192,57,43,0.3);
+  margin-left: 4px;
+}
+#map-retry-btn:hover { color: var(--vermilion-l); }
+
+/* iframe 容器 */
+#iframe-wrap { flex: 1; position: relative; overflow: hidden; }
+#view-iframe {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  border: none; background: var(--paper);
+}
+
+/* 地图加载失败提示层 */
+#map-fail-overlay {
+  position: absolute; inset: 0;
+  display: none; flex-direction: column; align-items: center; justify-content: center;
+  background: var(--paper); z-index: 3; gap: 12px;
+}
+#map-fail-overlay.show { display: flex; }
+.mfo-icon {
+  width: 56px; height: 56px;
+  border: 2px solid var(--border-mid); border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 24px; color: var(--ink-ghost);
+}
+.mfo-title { font-family: var(--font-serif); font-size: 15px; color: var(--ink-mid); letter-spacing: 1px; }
+.mfo-desc { font-family: var(--font-ui); font-size: 11px; color: var(--ink-ghost); letter-spacing: 0.5px; }
+.mfo-retry-btn {
+  margin-top: 4px; padding: 6px 20px;
+  background: transparent; border: 1px solid var(--vermilion-d);
+  border-radius: 2px; font-family: var(--font-ui); font-size: 11px;
+  color: var(--vermilion-d); cursor: pointer; transition: all .15s;
+}
+.mfo-retry-btn:hover { background: rgba(192,57,43,0.08); }
+
+/* ── 分割线（地图↕时间轴）── */
+#map-tl-divider {
+  height: 5px; flex-shrink: 0;
+  background: var(--paper-dark);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  cursor: row-resize;
+  display: flex; align-items: center; justify-content: center;
+  transition: background .15s;
+  position: relative;
+}
+#map-tl-divider:hover { background: rgba(192,57,43,0.06); }
+#map-tl-divider::after {
+  content: '';
+  width: 32px; height: 3px;
+  background: var(--border-mid); border-radius: 2px;
+}
+
+/* ══════════════════════════════════════════════════
+   时间轴区域 - 横向滚动布局
+══════════════════════════════════════════════════ */
 #timeline-section {
-  flex: 2; display: flex; flex-direction: column; overflow: hidden;
-  border-right: 1px solid var(--border);
-  background: var(--paper);
-  position: relative; /* 让 zoom 控制条能正确定位 */
+  flex: 0 0 400px; display: flex; flex-direction: column; overflow: hidden;
+  background: var(--paper); position: relative;
+  min-height: 90px;
+  border-top: 1px solid var(--border);
 }
 
 #tl-header {
-  padding: 8px 10px; font-family: var(--font-ui);
-  font-size: 11px; font-weight: 600; color: var(--ink-faint);
-  border-bottom: 1px solid var(--border); flex-shrink: 0;
-  letter-spacing: 1px;
+  display: flex; align-items: center; padding: 4px 10px;
+  font-family: var(--font-ui); font-size: 10px; font-weight: 600; color: var(--ink-faint);
+  border-bottom: 1px solid var(--border); flex-shrink: 0; letter-spacing: 1px;
+  gap: 8px; height: 26px;
 }
+#tl-header-title { flex-shrink: 0; }
+.tl-legend { display: flex; gap: 8px; flex: 1; }
+.tl-leg-item { display: flex; align-items: center; gap: 3px; font-size: 9px; color: var(--ink-ghost); }
+.tl-leg-dot { width: 7px; height: 7px; border-radius: 50%; }
 
-/* 答案面板 */
-#answer-panel {
-  flex: 2; display: flex; flex-direction: column;
-  overflow: hidden;
-  background: var(--paper-deep);
-  min-height: 0;
+/* 缩放按钮组（右侧） */
+#tl-zoom-btns {
+  display: flex; align-items: center; gap: 4px; flex-shrink: 0;
 }
-#answer-panel.show { display: flex; }
-#answer-panel::-webkit-scrollbar { width: 4px; }
-#answer-panel::-webkit-scrollbar-thumb { background: var(--border-mid); border-radius: 2px; }
-
-#answer-title {
-  font-family: var(--font-serif);
-  font-size: 11px; color: var(--ink-faint);
-  letter-spacing: 2px; text-transform: uppercase;
-  padding: 8px 12px;
-  border-bottom: 1px solid var(--border);
-  flex-shrink: 0;
-  display: flex; align-items: center; gap: 8px;
+#tl-zoom-btns span {
+  font-size: 11px; color: var(--ink-ghost); cursor: pointer; padding: 0 3px;
+  user-select: none; transition: color .15s;
 }
-#answer-title::before, #answer-title::after {
-  content: '';
-  flex: 1; height: 1px;
-  background: linear-gradient(90deg, transparent, var(--border-mid));
-}
-#answer-title::after {
-  background: linear-gradient(90deg, var(--border-mid), transparent);
-}
-
-#answer-content {
-  flex: 1; overflow-y: auto;
-  padding: 12px 16px;
-  font-family: var(--font-body);
-  font-size: 13px; line-height: 1.9;
-  color: var(--ink-mid);
-}
-#answer-content strong { color: var(--ink); font-weight: 600; }
-#answer-content h1, #answer-content h2, #answer-content h3 {
-  color: var(--ink); font-family: var(--font-serif);
-  margin: 8px 0 4px; }
-#answer-content p { margin: 6px 0; }
-#answer-content ul, #answer-content ol { margin: 6px 0; padding-left: 20px; }
-#answer-content code {
-  background: var(--paper-dark); padding: 1px 5px; border-radius: 3px;
-  font-family: monospace; font-size: 12px; }
-#answer-content pre {
-  background: var(--ink); color: var(--terminal-txt);
-  padding: 10px; border-radius: 4px; overflow-x: auto; }
-#answer-content pre code { background: transparent; padding: 0; }
-
-/* iframe 容器 */
-#iframe-wrap {
-  flex: 1; position: relative; overflow: hidden;
-}
-#view-iframe {
-  position: absolute; inset: 0;
-  width: 100%; height: 100%;
-  border: none;
-  background: var(--paper);
-}
-
-/* 时间轴内部样式 */
-#timeline-inner {
-  flex: 1; overflow-y: auto; overflow-x: hidden;
-  position: relative;
-  display: flex; flex-direction: column;
-}
-
-/* 时间轴容器 - 可缩放 */
-#timeline-container {
-  position: relative;
-  flex: 1; /* 占满剩余空间 */
-  transition: height 0.15s ease-out;
-}
-
-/* 中心轴线 */
-#timeline-axis {
-  position: absolute;
-  left: 50%; top: 0; bottom: 0;
-  width: 2px;
-  background: linear-gradient(to bottom, transparent, var(--vermilion-d) 10%, var(--vermilion-d) 90%, transparent);
-  transform: translateX(-50%);
-}
-
-/* 时间刻度线 */
-.tl-tick {
-  position: absolute;
-  left: 50%; transform: translateX(-50%);
-  display: flex; flex-direction: column; align-items: center;
-}
-.tl-tick-line {
-  width: 20px; height: 1px;
-  background: var(--border-mid);
-}
-.tl-tick-label {
-  font-family: var(--font-ui); font-size: 10px; color: var(--ink-ghost);
-  margin-top: 2px; white-space: nowrap;
-}
-
-/* 事件节点 */
-.tl-event {
-  position: absolute;
-  left: 50%; transform: translateX(-50%);
-  display: flex; flex-direction: column; align-items: center;
-  cursor: pointer; transition: transform 0.15s;
-}
-.tl-event:hover { transform: translateX(-50%) scale(1.05); }
-.tl-event.sel .tl-dot { box-shadow: 0 0 0 3px var(--celadon-l); }
-.tl-event-dot {
-  width: 14px; height: 14px; border-radius: 50%;
-  border: 2px solid var(--paper);
-  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-  z-index: 1;
-}
-.tl-event-label {
-  position: absolute;
-  left: calc(50% + 12px);
-  white-space: nowrap; max-width: 80px;
-  overflow: hidden; text-overflow: ellipsis;
-  font-family: var(--font-body); font-size: 11px; color: var(--ink-mid);
-  background: var(--paper);
-  padding: 2px 4px;
-}
-.tl-event-label.left {
-  left: auto; right: calc(50% + 12px);
-  text-align: right;
-}
-.tl-event-year {
-  font-family: var(--font-ui); font-size: 9px; color: var(--ink-ghost);
-  margin-top: 2px;
-}
-
-/* 缩放控制条 - 放在 timeline-inner 内部底部 */
-#timeline-zoom {
-  display: flex; align-items: center; justify-content: center; gap: 8px;
-  padding: 8px 12px;
-  background: var(--paper-dark);
-  border-top: 1px solid var(--border);
-  flex-shrink: 0;
-}
-#timeline-zoom span { font-size: 10px; color: var(--ink-ghost); }
+#tl-zoom-btns span:hover { color: var(--vermilion-d); }
 #zoom-slider {
-  width: 80px; height: 4px;
-  -webkit-appearance: none; appearance: none;
+  width: 60px; height: 3px; -webkit-appearance: none; appearance: none;
   background: var(--paper-deep); border-radius: 2px; outline: none;
 }
 #zoom-slider::-webkit-slider-thumb {
   -webkit-appearance: none; appearance: none;
-  width: 12px; height: 12px; border-radius: 50%;
+  width: 10px; height: 10px; border-radius: 50%;
   background: var(--vermilion-d); cursor: pointer;
 }
 
+/* 横向滚动容器 */
+#timeline-inner {
+  flex: 1; overflow-x: auto; overflow-y: hidden;
+  position: relative;
+  cursor: grab;
+}
+#timeline-inner:active { cursor: grabbing; }
+#timeline-inner::-webkit-scrollbar { height: 4px; }
+#timeline-inner::-webkit-scrollbar-track { background: var(--paper-dark); }
+#timeline-inner::-webkit-scrollbar-thumb { background: var(--border-mid); border-radius: 2px; }
+
+/* 时间轴可滚动内容区 */
+#timeline-container {
+  position: relative;
+  height: 100%;
+  display: flex; flex-direction: column;
+  /* width set by JS */
+  min-width: 100%;
+}
+
+/* 水平中心轴线 */
+#timeline-axis {
+  position: absolute;
+  top: 50%; left: 0; right: 0; height: 1.5px;
+  background: linear-gradient(to right, transparent, var(--vermilion-d) 3%, var(--vermilion-d) 97%, transparent);
+  transform: translateY(-50%);
+}
+
+/* 刻度线 - 竖向 */
+.tl-tick {
+  position: absolute; top: 0; bottom: 0;
+  display: flex; flex-direction: column; align-items: center;
+  pointer-events: none;
+}
+.tl-tick-line {
+  position: absolute; top: 50%; transform: translateY(-50%);
+  width: 1px; height: 10px;
+  background: var(--border-mid);
+}
+.tl-tick-label {
+  position: absolute; bottom: 4px;
+  font-family: var(--font-ui); font-size: 9px; color: var(--ink-ghost);
+  white-space: nowrap;
+  transform: translateX(-50%);
+}
+
+/* 事件节点 - 竖向布局在轴线上下交替 */
+.tl-event {
+  position: absolute;
+  display: flex; flex-direction: column; align-items: center;
+  cursor: pointer;
+  transform: translateX(-50%);
+  transition: opacity .15s;
+}
+.tl-event:hover { opacity: 0.85; }
+.tl-event:hover .tl-event-dot { transform: scale(1.3); }
+.tl-event.sel .tl-event-dot { box-shadow: 0 0 0 3px rgba(90,138,110,0.45); }
+
+/* 事件在轴线上方（偶数索引） */
+.tl-event.above {
+  bottom: calc(50% + 2px);
+  flex-direction: column-reverse;
+  align-items: center;
+}
+/* 事件在轴线下方（奇数索引） */
+.tl-event.below {
+  top: calc(50% + 2px);
+  align-items: center;
+}
+
+.tl-event-dot {
+  width: 10px; height: 10px; border-radius: 50%;
+  border: 2px solid var(--paper);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.22);
+  flex-shrink: 0;
+  transition: transform .15s, box-shadow .15s;
+  z-index: 2;
+}
+
+/* 连接线（从点到标题文字的竖线） */
+.tl-event-stem {
+  width: 1px; background: var(--border-mid);
+  flex-shrink: 0;
+}
+.tl-event.above .tl-event-stem { height: 12px; }
+.tl-event.below .tl-event-stem { height: 12px; }
+
+.tl-event-label {
+  font-family: var(--font-body); font-size: 10px; color: var(--ink-mid);
+  white-space: nowrap; line-height: 1.2;
+  padding: 1px 2px;
+  max-width: 80px; overflow: hidden; text-overflow: ellipsis;
+}
+.tl-event.sel .tl-event-label { color: var(--vermilion-d); font-weight: 500; }
+
+.tl-event-year-badge {
+  font-family: var(--font-ui); font-size: 8px; color: var(--ink-ghost);
+  white-space: nowrap;
+}
+
 /* 时间轴事件详情浮层 */
+/* ══ 事件详情弹窗 ══ */
 #event-detail {
-  position: fixed;
-  display: none;
-  width: 280px;
+  position: fixed; display: none; width: 300px;
   background: var(--paper);
   border: 1px solid var(--border-mid);
   border-radius: 8px;
-  box-shadow: 0 8px 32px var(--shadow-deep), 0 2px 8px var(--shadow);
-  z-index: 1000;
-  overflow: hidden;
-  animation: fadeInUp 0.25s ease-out;
+  box-shadow: 0 12px 32px var(--shadow-deep), 0 2px 8px var(--shadow);
+  z-index: 2000; overflow: hidden;
+  animation: fadeInUp 0.18s ease-out;
 }
-@keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(8px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
+@keyframes fadeInUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 #event-detail.show { display: block; }
+
 .ed-header {
-  padding: 12px 16px;
+  padding: 12px 14px 10px;
   background: var(--ink);
-  display: flex; align-items: center; gap: 10px;
+  display: flex; align-items: flex-start; gap: 10px;
+  position: relative;
 }
-.ed-dot {
-  width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0;
-  border: 2px solid rgba(255,255,255,0.3);
+.ed-cat-stripe {
+  width: 3px; border-radius: 2px; flex-shrink: 0;
+  align-self: stretch; min-height: 32px;
 }
+.ed-header-text { flex: 1; min-width: 0; }
 .ed-title {
-  flex: 1;
-  font-family: var(--font-serif);
-  font-size: 14px; font-weight: 600;
-  color: var(--paper);
-  letter-spacing: 0.5px;
+  font-family: var(--font-serif); font-size: 14px; font-weight: 600;
+  color: var(--paper); letter-spacing: 0.5px; line-height: 1.4;
+  margin-bottom: 3px;
 }
-.ed-year {
-  font-family: var(--font-ui);
-  font-size: 12px; color: var(--gold);
-  flex-shrink: 0;
-}
-.ed-body {
-  padding: 14px 16px;
-}
-.ed-desc {
-  font-family: var(--font-body);
-  font-size: 13px; line-height: 1.8;
-  color: var(--ink-mid);
-  margin-bottom: 12px;
-}
-.ed-meta {
-  display: flex; flex-direction: column; gap: 8px;
-}
-.ed-meta-item {
-  display: flex; align-items: flex-start; gap: 8px;
-}
-.ed-meta-label {
-  font-family: var(--font-ui);
-  font-size: 10px; color: var(--ink-ghost);
-  text-transform: uppercase; letter-spacing: 1px;
-  min-width: 40px;
-  padding-top: 2px;
-}
-.ed-meta-value {
-  font-family: var(--font-body);
-  font-size: 12px; color: var(--ink-mid);
-}
+.ed-year-row { display: flex; align-items: center; gap: 6px; }
+.ed-year { font-family: var(--font-ui); font-size: 11px; color: var(--gold); }
 .ed-cat-badge {
-  display: inline-block;
-  padding: 2px 8px;
-  border-radius: 10px;
-  font-family: var(--font-ui);
-  font-size: 10px; font-weight: 600;
+  display: inline-block; padding: 1px 6px; border-radius: 8px;
+  font-family: var(--font-ui); font-size: 9px; font-weight: 600;
   text-transform: uppercase; letter-spacing: 0.5px;
 }
-.ed-cat-badge.mil { background: #EEEDFE; color: #3C3489; }
-.ed-cat-badge.pol { background: #E1F5EE; color: #085041; }
-.ed-cat-badge.eco { background: #FAEEDA; color: #633806; }
-.ed-cat-badge.nat { background: #FAECE7; color: #712B13; }
+.ed-cat-badge.mil { background: rgba(83,74,183,0.25); color: #AFA9EC; }
+.ed-cat-badge.pol { background: rgba(15,110,86,0.25); color: #5DCAA5; }
+.ed-cat-badge.eco { background: rgba(133,79,11,0.25); color: #EF9F27; }
+.ed-cat-badge.nat { background: rgba(153,60,29,0.25); color: #F0997B; }
+
 .ed-close {
-  position: absolute; top: 10px; right: 10px;
-  width: 24px; height: 24px; border-radius: 50%;
-  background: rgba(255,255,255,0.1);
-  border: none; cursor: pointer;
+  position: absolute; top: 8px; right: 8px;
+  width: 20px; height: 20px; border-radius: 50%;
+  background: rgba(255,255,255,0.08); border: none; cursor: pointer;
   display: flex; align-items: center; justify-content: center;
-  color: var(--paper); font-size: 14px;
-  transition: background .15s;
+  color: rgba(212,201,168,0.6); font-size: 12px;
+  transition: background .15s, color .15s;
 }
-.ed-close:hover { background: rgba(255,255,255,0.2); }
+.ed-close:hover { background: rgba(255,255,255,0.18); color: var(--paper); }
+
+.ed-body { padding: 12px 14px; }
+.ed-desc {
+  font-family: var(--font-body); font-size: 12px; line-height: 1.85;
+  color: var(--ink-mid); margin-bottom: 10px;
+  border-left: 2px solid var(--border-mid); padding-left: 8px;
+}
+.ed-desc:empty { display: none; }
+.ed-meta { display: flex; flex-direction: column; gap: 7px; }
+.ed-meta-item { display: flex; align-items: flex-start; gap: 8px; }
+.ed-meta-label {
+  font-family: var(--font-ui); font-size: 9px; color: var(--ink-ghost);
+  text-transform: uppercase; letter-spacing: 1px;
+  min-width: 32px; padding-top: 2px; flex-shrink: 0;
+}
+.ed-meta-value { font-family: var(--font-body); font-size: 11.5px; color: var(--ink-mid); line-height: 1.5; }
+.ed-places-list { display: flex; flex-wrap: wrap; gap: 4px; }
+.ed-place-tag {
+  display: inline-block; padding: 1px 6px; border-radius: 10px;
+  font-family: var(--font-ui); font-size: 10px;
+  background: rgba(60,45,30,0.08); border: 1px solid var(--border);
+  color: var(--ink-mid); cursor: pointer; transition: all .15s;
+}
+.ed-place-tag:hover { border-color: var(--vermilion-d); color: var(--vermilion-d); background: rgba(192,57,43,0.06); }
+
 .ed-arrow {
-  position: absolute;
-  width: 12px; height: 12px;
+  position: absolute; width: 10px; height: 10px;
   background: var(--paper);
   border-left: 1px solid var(--border-mid);
   border-top: 1px solid var(--border-mid);
   transform: rotate(45deg);
 }
 
-/* ══════════════════════════════════════════════════
-   水平分隔线装饰
-══════════════════════════════════════════════════ */
-.ornament {
+#tl-popup {
+  position: absolute; display: none; z-index: 50;
+  background: var(--paper);
+  border: 1px solid var(--border-mid);
+  border-radius: 4px; padding: 7px 10px; width: 175px;
+  box-shadow: 0 4px 16px var(--shadow-deep);
+  pointer-events: none;
+}
+#tl-popup.show { display: block; }
+#tl-popup::after {
+  content: ''; position: absolute; left: 50%; bottom: -5px;
+  transform: translateX(-50%) rotate(45deg);
+  width: 8px; height: 8px;
+  background: var(--paper);
+  border-right: 1px solid var(--border-mid);
+  border-bottom: 1px solid var(--border-mid);
+}
+#tl-popup.flip-down::after {
+  bottom: auto; top: -5px;
+  border-right: none; border-bottom: none;
+  border-left: 1px solid var(--border-mid);
+  border-top: 1px solid var(--border-mid);
+}
+.tp-year { font-size: 9px; color: var(--ink-ghost); margin-bottom: 3px; font-family: var(--font-ui); display: flex; align-items: center; gap: 4px; }
+.tp-dot  { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.tp-title{ font-size: 11px; font-weight: 600; color: var(--ink); margin-bottom: 4px; font-family: var(--font-serif); line-height: 1.3; }
+.tp-desc { font-size: 10px; color: var(--ink-faint); line-height: 1.7; font-family: var(--font-body); border-left: 2px solid var(--border); padding-left: 6px; }
+/* ── 答案面板 ── */
+#answer-panel {
+  width: var(--answer-w); flex-shrink: 0;
+  display: flex; flex-direction: column;
+  overflow: hidden; background: var(--paper-deep);
+  border-left: 1px solid var(--border);
+}
+#answer-title {
+  font-family: var(--font-serif); font-size: 10px; color: var(--ink-faint);
+  letter-spacing: 2px; padding: 7px 12px;
+  border-bottom: 1px solid var(--border); flex-shrink: 0;
   display: flex; align-items: center; gap: 6px;
-  padding: 4px 0;
 }
-.ornament::before, .ornament::after {
-  content: '';
-  flex: 1; height: 1px;
-  background: rgba(255,255,255,0.08);
+#answer-title::before, #answer-title::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, transparent, var(--border-mid)); }
+#answer-title::after { background: linear-gradient(90deg, var(--border-mid), transparent); }
+#answer-content {
+  flex: 1; overflow-y: auto; padding: 12px 14px;
+  font-family: var(--font-body); font-size: 12.5px; line-height: 1.9; color: var(--ink-mid);
 }
-.ornament-diamond {
-  width: 5px; height: 5px;
-  background: var(--vermilion-d);
-  transform: rotate(45deg);
-  opacity: 0.7;
+#answer-content::-webkit-scrollbar { width: 3px; }
+#answer-content::-webkit-scrollbar-thumb { background: var(--border-mid); border-radius: 2px; }
+#answer-content strong { color: var(--ink); font-weight: 600; }
+#answer-content h1, #answer-content h2, #answer-content h3 { color: var(--ink); font-family: var(--font-serif); margin: 8px 0 4px; }
+#answer-content p { margin: 5px 0; }
+#answer-content ul, #answer-content ol { margin: 5px 0; padding-left: 18px; }
+#answer-content code { background: var(--paper-dark); padding: 1px 4px; border-radius: 3px; font-family: monospace; font-size: 11px; }
+#answer-content pre { background: var(--ink); color: var(--terminal-txt); padding: 8px; border-radius: 3px; overflow-x: auto; }
+#answer-content pre code { background: transparent; padding: 0; }
+
+/* ── 等待画面 ── */
+#view-pending {
+  position: absolute; inset: 0; display: none; align-items: center; justify-content: center;
+  background: var(--paper); z-index: 4;
 }
+#view-pending.show { display: flex; pointer-events: all; }
+.vp-inner { display: flex; flex-direction: column; align-items: center; gap: 14px; user-select: none; }
+.vp-brush { width: 70px; height: 70px; opacity: 0.85; }
+.vp-brush svg { width: 100%; height: 100%; }
+.vp-stroke { stroke-dasharray: 200; stroke-dashoffset: 200; animation: brush-write 2.4s ease-in-out infinite; }
+.vp-stroke.s1 { animation-delay: 0s;    stroke-dasharray: 110; stroke-dashoffset: 110; }
+.vp-stroke.s2 { animation-delay: 0.3s;  stroke-dasharray: 90;  stroke-dashoffset: 90; }
+.vp-stroke.s3 { animation-delay: 0.55s; stroke-dasharray: 95;  stroke-dashoffset: 95; }
+.vp-stroke.s4 { animation-delay: 0.8s;  stroke-dasharray: 70;  stroke-dashoffset: 70; }
+.vp-stroke.s5 { animation-delay: 1.0s;  stroke-dasharray: 68;  stroke-dashoffset: 68; }
+@keyframes brush-write { 0%{stroke-dashoffset:var(--dash,200);opacity:0} 8%{opacity:1} 55%{stroke-dashoffset:0;opacity:1} 80%{stroke-dashoffset:0;opacity:0.6} 100%{stroke-dashoffset:0;opacity:0.2} }
+.vp-dots { display:flex; gap:5px; align-items:center; }
+.vp-dot { width:4px; height:4px; border-radius:50%; background:var(--vermilion-d); animation:dot-bounce 1.4s ease-in-out infinite; opacity:0.7; }
+.vp-dot:nth-child(2) { animation-delay:0.2s; background:var(--gold); }
+.vp-dot:nth-child(3) { animation-delay:0.4s; }
+@keyframes dot-bounce { 0%,80%,100%{transform:translateY(0);opacity:0.4} 40%{transform:translateY(-5px);opacity:1} }
+.vp-text  { font-family:var(--font-serif); font-size:12px; color:var(--ink-faint); letter-spacing:2px; }
+.vp-phase { font-family:var(--font-ui); font-size:10px; color:var(--ink-ghost); letter-spacing:1px; min-height:14px; transition:opacity .4s; }
+
+/* 装饰线 */
+.ornament { display: flex; align-items: center; gap: 5px; padding: 3px 0; }
+.ornament::before, .ornament::after { content: ''; flex: 1; height: 1px; background: rgba(255,255,255,0.08); }
+.ornament-diamond { width: 4px; height: 4px; background: var(--vermilion-d); transform: rotate(45deg); opacity: 0.7; }
 
 /* ══════════════════════════════════════════════════
    响应式
 ══════════════════════════════════════════════════ */
-@media (max-width: 900px) {
-  #terminal-panel { width: 320px; }
+@media (max-width: 1000px) {
+  :root { --answer-w: 220px; }
 }
-@media (max-width: 680px) {
+@media (max-width: 800px) {
+  :root { --terminal-w: 160px; --answer-w: 180px; }
+}
+@media (max-width: 600px) {
   #app { flex-direction: column; }
-  #terminal-panel { width: 100%; height: 40vh; border-right: none; border-bottom: 1px solid rgba(192,57,43,0.3); }
+  #terminal-panel { width: 100% !important; height: 38vh; border-right: none; border-bottom: 1px solid rgba(192,57,43,0.3); }
+  :root { --answer-w: 100%; }
+  #answer-panel { width: 100%; border-left: none; border-top: 1px solid var(--border); height: 35vh; flex-shrink: 0; }
 }
+
+/* ══════════════════════════════════════════════════
+   地图样式切换选项
+══════════════════════════════════════════════════ */
+#map-style-menu {
+  position: absolute; top: 30px; left: 0;
+  background: var(--paper); border: 1px solid var(--border-mid);
+  border-radius: 4px; box-shadow: 0 6px 18px var(--shadow-deep);
+  z-index: 100; min-width: 160px; padding: 4px 0;
+  display: none; animation: fadeIn .15s ease-out;
+}
+#map-style-menu.open { display: block; }
+@keyframes fadeIn { from { opacity:0; transform:translateY(-4px); } to { opacity:1; transform:translateY(0); } }
+.msm-item {
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px 12px; cursor: pointer;
+  font-family: var(--font-ui); font-size: 11px; color: var(--ink-mid);
+  transition: background .12s;
+}
+.msm-item:hover { background: var(--paper-dark); }
+.msm-item.active { color: var(--vermilion-d); font-weight: 500; }
+.msm-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
 </style>
 </head>
 <body>
@@ -812,18 +714,15 @@ body::before {
   </div>
 
   <div id="search-wrap">
-    <input
-      id="search-input"
-      type="text"
-      placeholder="输入历史研究问题，按 Enter 或点击检索…"
-      autocomplete="off"
-    >
+    <input id="search-input" type="text" placeholder="输入历史研究问题，按 Enter 检索…" autocomplete="off">
     <button id="search-btn" title="检索">
       <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="22" y2="22"/></svg>
     </button>
   </div>
 
-  <div id="status-dot" title="就绪"></div>
+  <div id="header-right">
+    <div id="status-dot" title="就绪"></div>
+  </div>
 </div>
 
 <!-- ══ 主体 ══ -->
@@ -836,15 +735,12 @@ body::before {
       <div class="term-dot term-dot-y"></div>
       <div class="term-dot term-dot-g"></div>
       <span id="terminal-title">Research Console</span>
+      <button id="collapse-btn" title="收起" onclick="toggleTerminal()">◀</button>
     </div>
     <div id="terminal-body">
-      <div class="t-line" style="color:var(--ink-ghost);font-size:11px;margin-bottom:8px">
-        HistRAG v1.0 · 历史典籍研究引擎
-      </div>
+      <div class="t-line" style="color:var(--ink-ghost);font-size:10px;margin-bottom:7px">HistRAG v1.0 · 历史典籍研究引擎</div>
       <div class="ornament"><div class="ornament-diamond"></div></div>
-      <div class="t-line" style="color:rgba(212,201,168,0.4);font-size:11px;margin-top:8px">
-        在上方输入问题，开始检索…
-      </div>
+      <div class="t-line" style="color:rgba(212,201,168,0.4);font-size:10px;margin-top:7px">在上方输入问题，开始检索…</div>
     </div>
   </div>
 
@@ -853,16 +749,14 @@ body::before {
 
     <!-- 欢迎屏 -->
     <div id="welcome-screen">
-      <div class="welcome-seal">
-        <div class="welcome-seal-text">鉴</div>
-      </div>
+      <div class="welcome-seal"><div class="welcome-seal-text">鉴</div></div>
       <div class="welcome-title">史　鉴</div>
       <div class="welcome-sub">Historical Research Intelligence</div>
       <div class="welcome-divider"></div>
       <div class="welcome-hint">以史为鉴，探索历史的深度与广度</div>
       <div class="welcome-examples">
         <button class="eg-btn" onclick="setQuery(this.textContent)">元和年间的道制变化反映了怎样的政治格局？</button>
-        <button class="eg-btn" onclick="setQuery(this.textContent)">安史之乱的起因与唐朝藩镇割据的关系</button>
+        <button class="eg-btn" onclick="setQuery(this.textContent)">《元和郡县图志》是以唐宪宗'元和'年间的疆域为准的。请列举书中记录的全国'道'的名称。相比于唐初的'贞观十道'或开元'十五道'，元和年间的'道'在划分和数量上发生了哪些关键变化？这种变化反映了中晚唐怎样的政治格局？</button>
         <button class="eg-btn" onclick="setQuery(this.textContent)">《元和郡县图志》记录的全国道名称有哪些？</button>
       </div>
     </div>
@@ -871,67 +765,123 @@ body::before {
     <div id="view-area">
       <div id="view-tabs">
         <div class="v-tab active">◎ 视图</div>
-        <div id="view-loading">
-          <div class="spin"></div>
-          <span>生成视图…</span>
-        </div>
+        <div id="view-loading"><div class="spin"></div><span>生成视图…</span></div>
       </div>
 
-      <!-- 三栏布局：地图 | 时间轴 | 答案 -->
+      <!-- 三栏布局 -->
       <div id="triple-panel" style="position:relative">
-        <!-- 地图区域 -->
-        <div id="map-section">
-          <div id="iframe-wrap">
-            <iframe id="view-iframe" src="about:blank"></iframe>
-          </div>
-        </div>
 
-        <!-- 时间轴区域 -->
-        <div id="timeline-section">
-          <div id="tl-header">时间轴</div>
-          <div id="timeline-inner">
-            <div id="timeline-container">
-              <div id="timeline-axis"></div>
+        <!-- 中央：地图 + 时间轴 -->
+        <div id="map-tl-column">
+
+          <!-- 地图区域 -->
+          <div id="map-section">
+            <!-- 地图控制栏 -->
+            <div id="map-toolbar">
+              <div style="position:relative">
+                <button class="map-ctrl-btn active" id="map-style-btn" onclick="toggleStyleMenu()">
+                  <span id="map-style-label">深海蓝</span> ▾
+                </button>
+                <!-- 样式下拉菜单 -->
+                <div id="map-style-menu">
+                  <div class="msm-item active" data-style="ocean" onclick="selectMapStyle('ocean','深海蓝',this)">
+                    <div class="msm-dot" style="background:#1a70c0"></div>深海蓝
+                  </div>
+                  <div class="msm-item" data-style="ink" onclick="selectMapStyle('ink','水墨黑',this)">
+                    <div class="msm-dot" style="background:#555555"></div>水墨黑
+                  </div>
+                  <div class="msm-item" data-style="parchment" onclick="selectMapStyle('parchment','羊皮金',this)">
+                    <div class="msm-dot" style="background:#b88010"></div>羊皮金
+                  </div>
+                  <div class="msm-item" data-style="jade" onclick="selectMapStyle('jade','翡翠绿',this)">
+                    <div class="msm-dot" style="background:#289050"></div>翡翠绿
+                  </div>
+                </div>
+              </div>
+
+              <div id="map-error-badge">
+                ⚠ 地图渲染失败
+                <span id="map-retry-btn" onclick="retryMap()">重试</span>
+              </div>
             </div>
-            <div id="timeline-zoom">
-              <span>-</span>
-              <input type="range" id="zoom-slider" min="0.5" max="3" step="0.1" value="1">
-              <span>+</span>
+
+            <div id="iframe-wrap">
+              <iframe id="view-iframe" src="about:blank"></iframe>
+              <!-- 渲染失败覆盖层 -->
+              <div id="map-fail-overlay">
+                <div class="mfo-icon">⊘</div>
+                <div class="mfo-title">地图渲染失败</div>
+                <div class="mfo-desc" id="mfo-reason">无法加载地理视图</div>
+                <button class="mfo-retry-btn" onclick="retryMap()">重新加载</button>
+              </div>
             </div>
           </div>
+
+          <!-- 拖拽分割线 -->
+          <div id="map-tl-divider" title="拖拽调整高度"></div>
+
+          <!-- 时间轴区域（横向） -->
+          <div id="timeline-section">
+            <div id="tl-header">
+              <span id="tl-header-title">时　间　轴</span>
+              <div class="tl-legend">
+                <div class="tl-leg-item"><div class="tl-leg-dot" style="background:#534AB7"></div>军事</div>
+                <div class="tl-leg-item"><div class="tl-leg-dot" style="background:#0F6E56"></div>政治</div>
+                <div class="tl-leg-item"><div class="tl-leg-dot" style="background:#854F0B"></div>财政</div>
+                <div class="tl-leg-item"><div class="tl-leg-dot" style="background:#993C1D"></div>灾异</div>
+              </div>
+              <div id="tl-zoom-btns">
+                <span title="缩小" onclick="zoomTimeline(-0.25)">－</span>
+                <input type="range" id="zoom-slider" min="0.3" max="4" step="0.1" value="1">
+                <span title="放大" onclick="zoomTimeline(0.25)">＋</span>
+              </div>
+            </div>
+            <div id="timeline-inner">
+              <div id="timeline-container">
+                <div id="timeline-axis"></div>
+              </div>
+            </div>
+            <div id="tl-popup">                          <!-- 新增 -->
+              <div class="tp-year"><span class="tp-dot" id="tp-dot"></span><span id="tp-year"></span></div>
+              <div class="tp-title" id="tp-title"></div>
+              <div class="tp-desc" id="tp-desc"></div>
+            </div>
+          </div>
+
+        </div><!-- end map-tl-column -->
+
+        <!-- 右：答案面板 -->
+        <div id="answer-panel">
+          <div id="answer-title">研究结论</div>
+          <div id="answer-content"></div>
         </div>
 
         <!-- 事件详情浮层 -->
         <div id="event-detail">
           <div class="ed-header">
-            <div class="ed-dot" id="ed-dot"></div>
-            <div class="ed-title" id="ed-title"></div>
-            <div class="ed-year" id="ed-year"></div>
+            <div class="ed-cat-stripe" id="ed-stripe"></div>
+            <div class="ed-header-text">
+              <div class="ed-title" id="ed-title"></div>
+              <div class="ed-year-row">
+                <span class="ed-year" id="ed-year"></span>
+                <span class="ed-cat-badge" id="ed-cat"></span>
+              </div>
+            </div>
             <button class="ed-close" onclick="hideEventDetail()">×</button>
           </div>
           <div class="ed-body">
             <div class="ed-desc" id="ed-desc"></div>
             <div class="ed-meta">
-              <div class="ed-meta-item">
-                <span class="ed-meta-label">类别</span>
-                <span class="ed-cat-badge" id="ed-cat"></span>
-              </div>
-              <div class="ed-meta-item">
+              <div class="ed-meta-item" id="ed-places-row">
                 <span class="ed-meta-label">地点</span>
-                <span class="ed-meta-value" id="ed-places"></span>
+                <div class="ed-places-list" id="ed-places"></div>
               </div>
             </div>
           </div>
           <div class="ed-arrow" id="ed-arrow"></div>
         </div>
 
-        <!-- 答案面板 -->
-        <div id="answer-panel">
-          <div id="answer-title">研究结论</div>
-          <div id="answer-content"></div>
-        </div>
-
-        <!-- 等待画面：覆盖整个三栏区域 -->
+        <!-- 等待画面 -->
         <div id="view-pending">
           <div class="vp-inner">
             <div class="vp-brush">
@@ -943,21 +893,17 @@ body::before {
                 <path class="vp-stroke s5" d="M28 70 Q48 67 68 68 Q82 69 90 70" stroke="#3d3026" stroke-width="1.5" stroke-linecap="round"/>
               </svg>
             </div>
-            <div class="vp-seal">思</div>
-            <div class="vp-dots">
-              <span class="vp-dot"></span>
-              <span class="vp-dot"></span>
-              <span class="vp-dot"></span>
-            </div>
+            <div class="vp-dots"><span class="vp-dot"></span><span class="vp-dot"></span><span class="vp-dot"></span></div>
             <div class="vp-text">典籍检索中，稍候…</div>
             <div class="vp-phase" id="vp-phase">正在查阅史料</div>
           </div>
         </div>
-      </div>
-    </div>
 
-  </div>
-</div>
+      </div><!-- end triple-panel -->
+    </div><!-- end view-area -->
+
+  </div><!-- end content-panel -->
+</div><!-- end app -->
 
 <script>
 // ══════════════════════════════════════════════════
@@ -967,378 +913,450 @@ let isRunning   = false;
 let currentES   = null;
 let answerBuf   = '';
 let currentTab  = 'map';
+let _currentMapUrl = '';
+let _currentMapStyle = 'ocean';
+let _mapProjections  = ['自然地球','等距圆柱','墨卡托'];
+let _projIdx = 0;
 
 // ══════════════════════════════════════════════════
 //  搜索触发
 // ══════════════════════════════════════════════════
-document.getElementById('search-input').addEventListener('keydown', e => {
-  if (e.key === 'Enter') doSearch();
-});
+document.getElementById('search-input').addEventListener('keydown', e => { if (e.key === 'Enter') doSearch(); });
 document.getElementById('search-btn').addEventListener('click', doSearch);
+function setQuery(text) { document.getElementById('search-input').value = text; doSearch(); }
+function doSearch() { const q = document.getElementById('search-input').value.trim(); if (!q || isRunning) return; startQuery(q); }
 
-function setQuery(text) {
-  document.getElementById('search-input').value = text;
-  doSearch();
+// ══════════════════════════════════════════════════
+//  地图样式切换
+// ══════════════════════════════════════════════════
+function toggleStyleMenu() {
+  const m = document.getElementById('map-style-menu');
+  m.classList.toggle('open');
+}
+document.addEventListener('click', e => {
+  if (!e.target.closest('#map-style-btn') && !e.target.closest('#map-style-menu')) {
+    document.getElementById('map-style-menu').classList.remove('open');
+  }
+});
+function selectMapStyle(style, label, el) {
+  _currentMapStyle = style;
+  document.getElementById('map-style-label').textContent = label;
+  document.querySelectorAll('.msm-item').forEach(i => i.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('map-style-menu').classList.remove('open');
+  // 通知 iframe 切换样式
+  const iframe = document.getElementById('view-iframe');
+  if (iframe && iframe.contentWindow) {
+    iframe.contentWindow.postMessage({ type: 'setMapStyle', style }, '*');
+  }
+}
+function cycleProjection() {
+  _projIdx = (_projIdx + 1) % _mapProjections.length;
+  document.getElementById('map-proj-label').textContent = _mapProjections[_projIdx];
+  const iframe = document.getElementById('view-iframe');
+  if (iframe && iframe.contentWindow) {
+    iframe.contentWindow.postMessage({ type: 'setProjection', index: _projIdx }, '*');
+  }
 }
 
-function doSearch() {
-  const q = document.getElementById('search-input').value.trim();
-  if (!q || isRunning) return;
-  startQuery(q);
+// ══════════════════════════════════════════════════
+//  地图错误处理
+// ══════════════════════════════════════════════════
+function showMapError(reason) {
+  document.getElementById('map-error-badge').classList.add('show');
+  const overlay = document.getElementById('map-fail-overlay');
+  overlay.classList.add('show');
+  if (reason) document.getElementById('mfo-reason').textContent = reason;
 }
+function clearMapError() {
+  document.getElementById('map-error-badge').classList.remove('show');
+  document.getElementById('map-fail-overlay').classList.remove('show');
+}
+function retryMap() {
+  if (_currentMapUrl) loadView(_currentMapUrl);
+}
+
+// ══════════════════════════════════════════════════
+//  终端折叠
+// ══════════════════════════════════════════════════
+let _terminalCollapsed = false;
+function toggleTerminal() {
+  _terminalCollapsed = !_terminalCollapsed;
+  const panel = document.getElementById('terminal-panel');
+  const btn   = document.getElementById('collapse-btn');
+  panel.classList.toggle('collapsed', _terminalCollapsed);
+  btn.textContent = _terminalCollapsed ? '▶' : '◀';
+  btn.title = _terminalCollapsed ? '展开' : '收起';
+}
+
+// ══════════════════════════════════════════════════
+//  时间轴分割线拖拽（调整时间轴高度）
+// ══════════════════════════════════════════════════
+(function() {
+  const divider = document.getElementById('map-tl-divider');
+  const tlSec   = document.getElementById('timeline-section');
+  let dragging = false, startY = 0, startTlH = 0;
+
+  divider.addEventListener('mousedown', e => {
+    dragging = true;
+    startY   = e.clientY;
+    startTlH = tlSec.offsetHeight;
+    document.body.style.cursor = 'row-resize';
+    e.preventDefault();
+  });
+  document.addEventListener('mousemove', e => {
+    if (!dragging) return;
+    const dy = startY - e.clientY;  // drag up = bigger timeline
+    const newTlH = Math.max(80, Math.min(300, startTlH + dy));
+    tlSec.style.flex = 'none';
+    tlSec.style.height = newTlH + 'px';
+    // Re-render timeline with new height
+    if (_timelineEvents.length > 0) renderTimeline(_timelineEvents);
+  });
+  document.addEventListener('mouseup', () => {
+    dragging = false;
+    document.body.style.cursor = '';
+  });
+})();
 
 // ══════════════════════════════════════════════════
 //  查询执行
 // ══════════════════════════════════════════════════
 function startQuery(q) {
   if (currentES) { currentES.close(); currentES = null; }
-
-  isRunning  = true;
-  answerBuf  = '';
-
-  // 切换到主视图
+  isRunning = true; answerBuf = '';
   document.getElementById('welcome-screen').classList.add('hidden');
   document.getElementById('view-area').classList.add('visible');
-
   setStatus('running');
   clearTerminal();
   termLine(`<span class="t-prompt">›</span><span class="t-query">${escHtml(q)}</span>`);
   termSep();
-
-  // 重置 iframe，显示等待画面
   document.getElementById('view-iframe').src = 'about:blank';
   document.getElementById('view-loading').classList.remove('show');
-  document.getElementById('answer-panel').classList.remove('show');
   document.getElementById('answer-content').textContent = '';
+  clearMapError();
   showPending(true);
   startPhaseLoop();
 
-  // 打开 SSE
   const url = `/api/query?q=${encodeURIComponent(q)}`;
   const es  = new EventSource(url);
   currentES = es;
-
-  let textBuf = '';   // 当前 text_delta 行缓冲
-  let cursorEl = null;
+  let textBuf = '', cursorEl = null;
 
   function flushText() {
     if (!textBuf) return;
     if (cursorEl) cursorEl.remove();
     termLine(`<span class="t-text">${escHtml(textBuf)}</span>`);
     answerBuf += textBuf + '\n';
-    textBuf = '';
-    cursorEl = null;
+    textBuf = ''; cursorEl = null;
   }
 
   es.onmessage = e => {
-    let msg;
-    try { msg = JSON.parse(e.data); } catch { return; }
-
+    let msg; try { msg = JSON.parse(e.data); } catch { return; }
     switch (msg.type) {
-
       case 'text_delta':
         textBuf += msg.text;
-        // 有换行就刷新
         if (textBuf.includes('\n')) {
           const lines = textBuf.split('\n');
           textBuf = lines.pop();
           lines.forEach(l => {
             if (cursorEl) cursorEl.remove();
             termLine(`<span class="t-text">${escHtml(l)}</span>`);
-            answerBuf += l + '\n';
-            cursorEl = null;
+            answerBuf += l + '\n'; cursorEl = null;
           });
         }
-        // 更新光标行
-        updateCursorLine(textBuf);
-        break;
+        updateCursorLine(textBuf); break;
 
       case 'tool_start': {
         flushText();
-        const inp  = msg.input || {};
-        const tool = msg.tool  || '';
+        const inp = msg.input || {}; const tool = msg.tool || '';
         const isRag = tool === 'rag_query' || tool === 'rag_data_query';
-        const mode  = (inp.mode || '').toUpperCase();
-        const query = inp.query || '';
-        const topk  = inp.top_k || '';
+        const mode = (inp.mode || '').toUpperCase(); const query = inp.query || ''; const topk = inp.top_k || '';
         const blockId = 'tool-' + Date.now();
-        let inner = '<div class="t-tool-header">'
-          + '<span style="color:var(--celadon-l)">⟳ ' + escHtml(tool) + '</span>';
-        if (isRag && mode)  inner += '<span class="t-tool-badge t-tool-badge-mode">' + escHtml(mode) + '</span>';
-        if (isRag && topk)  inner += '<span class="t-tool-badge" style="background:rgba(255,255,255,0.06);color:var(--ink-ghost);border:1px solid rgba(255,255,255,0.1)">top_k ' + escHtml(String(topk)) + '</span>';
+        let inner = '<div class="t-tool-header"><span style="color:var(--celadon-l)">⟳ ' + escHtml(tool) + '</span>';
+        if (isRag && mode) inner += '<span class="t-tool-badge t-tool-badge-mode">' + escHtml(mode) + '</span>';
+        if (isRag && topk) inner += '<span class="t-tool-badge" style="background:rgba(255,255,255,0.06);color:var(--ink-ghost);border:1px solid rgba(255,255,255,0.1)">top_k ' + escHtml(String(topk)) + '</span>';
         inner += '</div>';
         if (isRag && query) inner += '<div class="t-tool-query">' + escHtml(query) + '</div>';
         inner += '<div class="t-tool-done" id="' + blockId + '-done" style="display:none">完成</div>';
-        const el = document.createElement('div');
-        el.className = 't-line';
+        const el = document.createElement('div'); el.className = 't-line';
         el.innerHTML = '<div class="t-tool-block" id="' + blockId + '">' + inner + '</div>';
         document.getElementById('terminal-body').appendChild(el);
-        scrollTerminal();
-        window._lastToolBlockId = blockId;
-        break;
+        scrollTerminal(); window._lastToolBlockId = blockId; break;
       }
-
       case 'tool_end': {
         const doneEl = document.getElementById((window._lastToolBlockId||'') + '-done');
         if (doneEl) {
-          if (msg.is_error) {
-            doneEl.style.color = 'var(--vermilion-l)';
-            doneEl.innerHTML = '✗ 失败: ' + escHtml((msg.result||'').slice(0,80));
-          }
+          if (msg.is_error) { doneEl.style.color = 'var(--vermilion-l)'; doneEl.innerHTML = '✗ 失败: ' + escHtml((msg.result||'').slice(0,80)); }
           doneEl.style.display = 'flex';
         } else if (msg.is_error) {
           termLine('<span class="t-tool-err">✗ ' + escHtml(msg.tool||'') + ': ' + escHtml(msg.result||'') + '</span>');
         }
         break;
       }
-
       case 'linked_view':
-        flushText();
-        termSep();
+        flushText(); termSep();
         const viewTag = document.createElement('div');
         viewTag.className = 't-line';
         viewTag.innerHTML = `<span class="t-view-ready" onclick="loadView('${msg.url}')">联动视图已就绪，点击查看地图·时间轴</span>`;
         document.getElementById('terminal-body').appendChild(viewTag);
         scrollTerminal();
-        // 自动加载地图
         loadView(msg.url);
-        // 渲染时间轴（保存在全局供 selectTimelineEvent 使用）
-        console.log('[SSE] linked_view received, events:', msg.events ? msg.events.length : 0);
-        if (msg.events && msg.events.length > 0) {
-          _timelineEvents = msg.events;
-          renderTimeline(msg.events);
-        } else {
-          console.warn('[SSE] no events in linked_view message');
-        }
+        if (msg.events && msg.events.length > 0) { _timelineEvents = msg.events; renderTimeline(msg.events); }
         break;
-
       case 'turn_complete':
-        flushText();
-        termSep();
-        // Markdown 渲染答案
+        flushText(); termSep();
         const mdContent = answerBuf.trim();
         const answerEl = document.getElementById('answer-content');
-        if (window.marked) {
-          answerEl.innerHTML = marked.parse(mdContent);
-        } else {
-          answerEl.textContent = mdContent;
-        }
-        stopPhaseLoop();
-        showPending(false);
-        isRunning = false;
-        setStatus('done');
-        es.close();
-        break;
-
+        if (window.marked) { answerEl.innerHTML = marked.parse(mdContent); } else { answerEl.textContent = mdContent; }
+        stopPhaseLoop(); showPending(false); isRunning = false; setStatus('done'); es.close(); break;
       case 'error':
         flushText();
         termLine(`<span class="t-tool-err">✗ 错误: ${escHtml(msg.message||'')}</span>`);
-        isRunning = false;
-        setStatus('error');
-        es.close();
-        break;
-
+        isRunning = false; setStatus('error'); es.close(); break;
       case 'done':
-        flushText();
-        isRunning = false;
-        setStatus('done');
-        es.close();
-        break;
+        flushText(); isRunning = false; setStatus('done'); es.close(); break;
     }
   };
 
   es.onerror = () => {
-    if (isRunning) {
-      termLine(`<span class="t-tool-err">✗ 连接中断</span>`);
-      setStatus('error');
-      isRunning = false;
-    }
+    if (isRunning) { termLine(`<span class="t-tool-err">✗ 连接中断</span>`); setStatus('error'); isRunning = false; }
     es.close();
   };
 }
 
 // ══════════════════════════════════════════════════
-//  视图加载
+//  视图加载（含错误处理）
 // ══════════════════════════════════════════════════
 function loadView(url) {
-  console.log('[loadView] loading:', url);
+  _currentMapUrl = url;
+  clearMapError();
   document.getElementById('view-loading').classList.add('show');
-  document.getElementById('answer-panel').classList.add('show');
   const iframe = document.getElementById('view-iframe');
-  iframe.onload = () => {
-    console.log('[loadView] iframe loaded');
+  let _loadTimeout = null;
+
+  _loadTimeout = setTimeout(() => {
+    // 超时：5秒未加载完成
     document.getElementById('view-loading').classList.remove('show');
-    showPending(false);
-    stopPhaseLoop();
+    showMapError('地图资源加载超时，请检查网络或重试');
+    showPending(false); stopPhaseLoop();
+  }, 15000);  // 3D 地图初始化需要更多时间
+
+  iframe.onload = () => {
+    clearTimeout(_loadTimeout);
+    document.getElementById('view-loading').classList.remove('show');
+    showPending(false); stopPhaseLoop();
+    // 检测 iframe 内容是否为错误页
+    try {
+      const doc = iframe.contentDocument;
+      // 只检测明确的错误标志：HTTP 错误状态页（title 为纯英文 Error）
+      // 不检测 body 文本，避免中文"错误"或事件标题误触发
+      const isErrPage = doc && doc.title && /^(Error|404|500|502|503)/.test(doc.title.trim());
+      if (isErrPage) {
+        showMapError('地图页面返回错误（HTTP ' + doc.title + '）');
+      } else {
+        clearMapError();
+        // 传递当前样式给 iframe
+        if (iframe.contentWindow) {
+          iframe.contentWindow.postMessage({ type: 'setMapStyle', style: _currentMapStyle }, '*');
+        }
+      }
+    } catch(e) { /* cross-origin or same-origin fine */ clearMapError(); }
   };
+
+  iframe.onerror = () => {
+    clearTimeout(_loadTimeout);
+    document.getElementById('view-loading').classList.remove('show');
+    showMapError('无法加载地图页面');
+    showPending(false); stopPhaseLoop();
+  };
+
   iframe.src = url + '?t=' + Date.now();
 }
 
 // ══════════════════════════════════════════════════
-//  时间轴渲染（垂直时间轴，中间是轴线，事件节点绑定在轴线上）
+//  时间轴（横向滚动）
 // ══════════════════════════════════════════════════
-const CAT_COLORS = {
-  mil: '#534AB7',
-  pol: '#0F6E56',
-  eco: '#854F0B',
-  nat: '#993C1D',
-};
-
+const CAT_COLORS = { mil: '#534AB7', pol: '#0F6E56', eco: '#854F0B', nat: '#993C1D' };
 let _timelineZoom = 1;
 let _timelineEvents = [];
-let _timelineBounds = { minYear: 0, maxYear: 1 };
 
 function renderTimeline(events) {
   const container = document.getElementById('timeline-container');
-  const section = document.getElementById('timeline-section');
-  const inner = document.getElementById('timeline-inner');
-  console.log('[renderTimeline] container:', container, 'events count:', events ? events.length : 0);
-  if (!container || !events || events.length === 0) {
-    console.warn('[renderTimeline] skipped - missing container or events');
-    return;
-  }
+  const inner     = document.getElementById('timeline-inner');
+  if (!container || !events || events.length === 0) return;
 
-  // 排序
   const sorted = [...events].sort((a, b) => a.y - b.y);
   _timelineEvents = sorted;
-
-  // 计算年份范围
   const years = sorted.map(e => e.y);
   const minYear = Math.min(...years);
   const maxYear = Math.max(...years);
-  _timelineBounds = { minYear, maxYear };
+  const span = Math.max(maxYear - minYear, 1);
 
-  // 生成刻度线
-  const span = maxYear - minYear;
-  const step = span > 500 ? 50 : span > 200 ? 20 : 10;
+  // Tick step
+  const step = span > 500 ? 50 : span > 200 ? 20 : span > 80 ? 10 : 5;
   const ticks = [];
-  for (let y = Math.floor(minYear / step) * step; y <= maxYear + step; y += step) {
-    ticks.push(y);
-  }
+  for (let y = Math.floor(minYear / step) * step; y <= maxYear + step; y += step) ticks.push(y);
+
+  // px per year
+  const pxPerYear = 60 * _timelineZoom;
+  const padPx = 60; // left/right padding
+  const totalW = Math.round(span * pxPerYear) + padPx * 2;
+
+  // Heights — half the inner height available above/below axis
+  const innerH = inner.clientHeight || 80;
+  const halfH  = Math.floor((innerH - 26) / 2); // 26 = header
 
   let html = '<div id="timeline-axis"></div>';
-  const baseUnitHeight = 40 * _timelineZoom; // 每个年份单位高度 × 缩放比例
 
-  // 刻度线
+  // Tick marks
   ticks.forEach(y => {
-    const pos = (y - minYear) * baseUnitHeight;
-    html += `
-      <div class="tl-tick" style="top:${pos}px">
-        <div class="tl-tick-line"></div>
-        <span class="tl-tick-label">${y < 0 ? '前' + Math.abs(y) : y}</span>
-      </div>`;
+    const x = Math.round((y - minYear) * pxPerYear) + padPx;
+    const label = y < 0 ? '前' + Math.abs(y) : String(y);
+    html += `<div class="tl-tick" style="left:${x}px">
+      <div class="tl-tick-line"></div>
+      <span class="tl-tick-label">${label}</span>
+    </div>`;
   });
 
-  // 事件节点（绑在轴线上）
+  // Event nodes — alternate above/below the axis
   sorted.forEach((e, idx) => {
-    const pos = (e.y - minYear) * baseUnitHeight;
+    const x = Math.round((e.y - minYear) * pxPerYear) + padPx;
     const color = CAT_COLORS[e.cat] || CAT_COLORS.pol;
-    const label = e.title.length > 10 ? e.title.slice(0, 10) + '…' : e.title;
-    const isLeft = idx % 2 === 0;
-    html += `
-      <div class="tl-event" style="top:${pos}px" data-idx="${idx}" onclick="selectTimelineEvent(${idx})">
-        <div class="tl-event-dot" style="background:${color}"></div>
-        <span class="tl-event-label ${isLeft ? 'left' : ''}">${label}</span>
-        <span class="tl-event-year">${e.y < 0 ? '前' + Math.abs(e.y) : e.y}</span>
-      </div>`;
+    const label = e.title.length > 7 ? e.title.slice(0, 7) + '…' : e.title;
+    const isAbove = idx % 2 === 0;
+    const cls = isAbove ? 'above' : 'below';
+    const yearStr = e.y < 0 ? '前' + Math.abs(e.y) : String(e.y);
+    html += `<div class="tl-event ${cls}" style="left:${x}px" data-idx="${idx}" onclick="selectTimelineEvent(${idx})">
+      <span class="tl-event-label">${label}</span>
+      <div class="tl-event-stem"></div>
+      <div class="tl-event-dot" style="background:${color}"></div>
+      <div class="tl-event-stem"></div>
+      <span class="tl-event-year-badge">${yearStr}</span>
+    </div>`;
   });
 
-  const totalHeight = (span + step) * baseUnitHeight + 100;
   container.innerHTML = html;
-  container.style.height = totalHeight + 'px';
-  inner.scrollTop = totalHeight / 2 - inner.clientHeight / 2; // 滚动到中间
-  console.log('[renderTimeline] done, events:', sorted.length);
+  container.style.width  = totalW + 'px';
+  container.style.height = '100%';
+
+  // Scroll to roughly the middle year
+  const midX = Math.round(((minYear + maxYear) / 2 - minYear) * pxPerYear) + padPx;
+  inner.scrollLeft = midX - inner.clientWidth / 2;
 }
 
+// Touch/mouse drag to scroll
+(function() {
+  const inner = document.getElementById('timeline-inner');
+  let isDragging = false, startX = 0, startScroll = 0;
+  inner.addEventListener('mousedown', e => {
+    isDragging = true; startX = e.pageX; startScroll = inner.scrollLeft;
+    inner.style.cursor = 'grabbing';
+    e.preventDefault(); // 阻止默认行为（文本选择等）
+  });
+  document.addEventListener('mousemove', e => {
+    if (!isDragging) return;
+    inner.scrollLeft = startScroll - (e.pageX - startX);
+  });
+  document.addEventListener('mouseup', () => {
+    isDragging = false; inner.style.cursor = 'grab';
+  });
+  // Touch
+  inner.addEventListener('touchstart', e => {
+    startX = e.touches[0].pageX; startScroll = inner.scrollLeft;
+  }, { passive: true });
+  inner.addEventListener('touchmove', e => {
+    inner.scrollLeft = startScroll - (e.touches[0].pageX - startX);
+  }, { passive: true });
+  // 滚轮缩放
+  inner.addEventListener('wheel', e => {
+    e.preventDefault();
+    const delta = e.deltaY > 0 ? -0.15 : 0.15;
+    const newVal = Math.min(4, Math.max(0.3, _timelineZoom + delta));
+    _timelineZoom = Math.round(newVal * 10) / 10;
+    document.getElementById('zoom-slider').value = _timelineZoom;
+    renderTimeline(_timelineEvents);
+  }, { passive: false });
+})();
+
 function selectTimelineEvent(idx) {
-  const events = document.querySelectorAll('.tl-event');
-  events.forEach((it, i) => it.classList.toggle('sel', i === idx));
-
-  // 显示事件详情浮层
-  if (_timelineEvents[idx]) {
-    showEventDetail(_timelineEvents[idx], events[idx]);
-  }
-
-  // 通知 iframe
+  document.querySelectorAll('.tl-event').forEach((it, i) => it.classList.toggle('sel', i === idx));
+  if (_timelineEvents[idx]) showEventDetail(_timelineEvents[idx], document.querySelectorAll('.tl-event')[idx]);
   const iframe = document.getElementById('view-iframe');
-  if (iframe && iframe.contentWindow) {
-    iframe.contentWindow.postMessage({ type: 'selectEvent', index: idx }, '*');
+  if (iframe && iframe.contentWindow) iframe.contentWindow.postMessage({ type: 'selectEvent', index: idx }, '*');
+  // Scroll the selected event into view
+  const evEl = document.querySelector(`.tl-event[data-idx="${idx}"]`);
+  if (evEl) {
+    const inner2 = document.getElementById('timeline-inner');
+    const evX = parseInt(evEl.style.left);
+    inner2.scrollTo({ left: evX - inner2.clientWidth / 2, behavior: 'smooth' });
   }
 }
 
 const CAT_LABELS = { mil: '军事', pol: '政治', eco: '财政', nat: '灾异' };
 
 function showEventDetail(e, domEl) {
-  const detail = document.getElementById('event-detail');
-  const dot = document.getElementById('ed-dot');
-  const title = document.getElementById('ed-title');
-  const year = document.getElementById('ed-year');
-  const desc = document.getElementById('ed-desc');
-  const cat = document.getElementById('ed-cat');
-  const places = document.getElementById('ed-places');
-  const arrow = document.getElementById('ed-arrow');
+  const popup  = document.getElementById('tl-popup');
+  const section = document.getElementById('timeline-section');
+  const color  = CAT_COLORS[e.cat] || CAT_COLORS.pol;
 
-  const color = CAT_COLORS[e.cat] || CAT_COLORS.pol;
+  document.getElementById('tp-dot').style.background = color;
+  document.getElementById('tp-year').textContent =
+    `${e.y < 0 ? '前'+Math.abs(e.y) : e.y}年 · ${CAT_LABELS[e.cat]||e.cat}`;
+  document.getElementById('tp-title').textContent = e.title;
+  document.getElementById('tp-desc').textContent  = e.desc || '暂无描述';
 
-  dot.style.background = color;
-  title.textContent = e.title;
-  year.textContent = e.y < 0 ? '前' + Math.abs(e.y) + '年' : e.y + '年';
-  desc.textContent = e.desc || '暂无描述';
-  cat.textContent = CAT_LABELS[e.cat] || e.cat || '政治';
-  cat.className = 'ed-cat-badge ' + (e.cat || 'pol');
-  places.textContent = (e.places && e.places.length) ? e.places.join('、') : '暂无';
+  const secRect = section.getBoundingClientRect();
+  const dotEl   = domEl.querySelector('.tl-event-dot');
+  const dotRect = dotEl.getBoundingClientRect();
+  const pw = 175, ph = 96;
 
-  // 计算浮层位置（优先显示在节点右侧，左侧空间不够则显示在左侧）
-  const rect = domEl.getBoundingClientRect();
-  const detailW = 280, detailH = 200;
-  const viewportW = window.innerWidth;
-  const viewportH = window.innerHeight;
+  let left = dotRect.left - secRect.left + dotRect.width / 2 - pw / 2;
+  let top  = dotRect.top  - secRect.top  - ph - 8;
+  popup.classList.remove('flip-down');
 
-  let left = rect.right + 12;
-  let top = Math.max(10, Math.min(rect.top - 30, viewportH - detailH - 10));
-  arrow.style.left = 'auto';
-  arrow.style.right = 'auto';
-  arrow.style.top = '50%';
-  arrow.style.transform = 'translateY(-50%) rotate(-45deg)';
-
-  if (left + detailW > viewportW - 10) {
-    left = rect.left - detailW - 12;
-    arrow.style.left = -6 + 'px';
-    arrow.style.right = 'auto';
-  } else {
-    arrow.style.left = 'auto';
-    arrow.style.right = -6 + 'px';
+  if (top < 2) {
+    top = dotRect.top - secRect.top + dotRect.height + 8;
+    popup.classList.add('flip-down');
   }
-
-  detail.style.left = left + 'px';
-  detail.style.top = top + 'px';
-  detail.classList.add('show');
+  left = Math.max(4, Math.min(left, secRect.width - pw - 4));
+  popup.style.left = left + 'px';
+  popup.style.top  = top  + 'px';
+  popup.classList.add('show');
 }
 
 function hideEventDetail() {
-  document.getElementById('event-detail').classList.remove('show');
+  document.getElementById('tl-popup').classList.remove('show');
   document.querySelectorAll('.tl-event').forEach(el => el.classList.remove('sel'));
 }
-
-// 缩放控制 - 重新计算节点位置（不改 CSS transform）
+// 缩放控制
 document.getElementById('zoom-slider').addEventListener('input', function() {
   _timelineZoom = parseFloat(this.value);
-  renderTimeline(_timelineEvents); // 重新渲染，应用新间距
+  renderTimeline(_timelineEvents);
 });
+function zoomTimeline(delta) {
+  const slider = document.getElementById('zoom-slider');
+  const newVal = Math.min(4, Math.max(0.3, _timelineZoom + delta));
+  _timelineZoom = Math.round(newVal * 10) / 10;
+  slider.value = _timelineZoom;
+  renderTimeline(_timelineEvents);
+}
 
-// 点击其他地方关闭详情
-document.addEventListener('click', function(e) {
-  if (!e.target.closest('.tl-event') && !e.target.closest('#event-detail')) {
-    hideEventDetail();
+document.addEventListener('click', e => {
+  if (!e.target.closest('.tl-event') && !e.target.closest('#event-detail')) hideEventDetail();
+    // 新增：点击时间轴空白也关闭 popup
+  if (!e.target.closest('.tl-event')) {
+    document.getElementById('tl-popup').classList.remove('show');
   }
 });
-
-// 监听 iframe 消息
 window.addEventListener('message', e => {
-  if (e.data && e.data.type === 'eventSelected') {
-    const idx = e.data.index;
-    const items = document.querySelectorAll('.tl-event');
-    items.forEach((it, i) => it.classList.toggle('sel', i === idx));
+  if (!e.data) return;
+  if (e.data.type === 'eventSelected') {
+    selectTimelineEvent(e.data.index);
+  }
+  // 3D 地图内部错误（Three.js 未加载等）
+  if (e.data.type === 'mapError') {
+    showMapError(e.data.message || '3D 地图渲染失败');
   }
 });
 
@@ -1346,61 +1364,35 @@ window.addEventListener('message', e => {
 //  终端工具函数
 // ══════════════════════════════════════════════════
 let _cursorLineEl = null;
-
 function termLine(html) {
   if (_cursorLineEl) { _cursorLineEl.remove(); _cursorLineEl = null; }
-  const el = document.createElement('div');
-  el.className = 't-line';
-  el.innerHTML = html;
-  document.getElementById('terminal-body').appendChild(el);
-  scrollTerminal();
+  const el = document.createElement('div'); el.className = 't-line'; el.innerHTML = html;
+  document.getElementById('terminal-body').appendChild(el); scrollTerminal();
 }
-
 function updateCursorLine(text) {
-  if (!_cursorLineEl) {
-    _cursorLineEl = document.createElement('div');
-    _cursorLineEl.className = 't-line';
-    document.getElementById('terminal-body').appendChild(_cursorLineEl);
-  }
-  _cursorLineEl.innerHTML =
-    `<span class="t-text">${escHtml(text)}</span><span class="t-cursor"></span>`;
+  if (!_cursorLineEl) { _cursorLineEl = document.createElement('div'); _cursorLineEl.className = 't-line'; document.getElementById('terminal-body').appendChild(_cursorLineEl); }
+  _cursorLineEl.innerHTML = `<span class="t-text">${escHtml(text)}</span><span class="t-cursor"></span>`;
   scrollTerminal();
 }
-
 function termSep() {
-  const hr = document.createElement('hr');
-  hr.className = 't-separator';
-  document.getElementById('terminal-body').appendChild(hr);
-  scrollTerminal();
+  const hr = document.createElement('hr'); hr.className = 't-separator';
+  document.getElementById('terminal-body').appendChild(hr); scrollTerminal();
 }
-
 function clearTerminal() {
-  const body = document.getElementById('terminal-body');
-  body.innerHTML = `
-    <div class="t-line" style="color:var(--ink-ghost);font-size:11px;margin-bottom:8px">
-      HistRAG v1.0 · 历史典籍研究引擎
-    </div>
-    <div class="ornament"><div class="ornament-diamond"></div></div>
-  `;
+  document.getElementById('terminal-body').innerHTML = `
+    <div class="t-line" style="color:var(--ink-ghost);font-size:10px;margin-bottom:7px">HistRAG v1.0 · 历史典籍研究引擎</div>
+    <div class="ornament"><div class="ornament-diamond"></div></div>`;
   _cursorLineEl = null;
 }
-
-function scrollTerminal() {
-  const body = document.getElementById('terminal-body');
-  body.scrollTop = body.scrollHeight;
-}
+function scrollTerminal() { const b = document.getElementById('terminal-body'); b.scrollTop = b.scrollHeight; }
 
 // ══════════════════════════════════════════════════
-//  等待画面控制
+//  等待画面
 // ══════════════════════════════════════════════════
 function showPending(on) {
   const el = document.getElementById('view-pending');
   if (!el) return;
-  if (on) {
-    el.classList.add('show');
-  } else {
-    el.classList.remove('show');
-  }
+  if (on) el.classList.add('show'); else el.classList.remove('show');
 }
 const PHASES = ['正在查阅史料…','检索知识图谱…','梳理历史脉络…','考证文献来源…','整理时间地理…','综合史料撰文…'];
 let _phaseTimer = null, _phaseIdx = 0;
@@ -1414,16 +1406,13 @@ function startPhaseLoop() {
     if (el) { el.style.opacity='0'; setTimeout(()=>{ el.textContent=PHASES[_phaseIdx]; el.style.opacity='1'; },200); }
   }, 2800);
 }
-function stopPhaseLoop() {
-  if (_phaseTimer) { clearInterval(_phaseTimer); _phaseTimer = null; }
-}
+function stopPhaseLoop() { if (_phaseTimer) { clearInterval(_phaseTimer); _phaseTimer = null; } }
 
 // ══════════════════════════════════════════════════
 //  状态指示器
 // ══════════════════════════════════════════════════
 function setStatus(s) {
-  const dot = document.getElementById('status-dot');
-  dot.className = '';
+  const dot = document.getElementById('status-dot'); dot.className = '';
   if (s) dot.classList.add(s);
 }
 
@@ -1431,9 +1420,7 @@ function setStatus(s) {
 //  工具函数
 // ══════════════════════════════════════════════════
 function escHtml(s) {
-  return String(s)
-    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
-    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 </script>
 </body>

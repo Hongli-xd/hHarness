@@ -121,14 +121,18 @@ class AnthropicApiClient:
                             tool_call_id = getattr(block, "id", "")
                             name = getattr(block, "name", "")
                             input_json = getattr(block, "input", {})
-                            # Override with buffered partial if it has more complete data
+                            # Override with buffered partial if it has any data
+                            # input_json events from MiniMax stream complete tool input as JSON chunks
                             if tool_call_id in pending_tool_inputs:
                                 try:
                                     import json
                                     buffered = json.loads(pending_tool_inputs[tool_call_id])
                                     # Merge: buffered takes precedence if it has actual values
-                                    if buffered.get("query") is not None:
-                                        input_json = buffered
+                                    if buffered:
+                                        # For tools without "query" (e.g. cite uses operation/claim),
+                                        # still apply buffered data when content_block_stop input is empty
+                                        if input_json == {} or buffered.get("query") is not None:
+                                            input_json = buffered
                                 except Exception:
                                     pass
                                 del pending_tool_inputs[tool_call_id]

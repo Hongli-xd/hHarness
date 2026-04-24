@@ -196,7 +196,16 @@ class AgentEngine:
                 yield ErrorEvent(error=str(e))
                 return
 
-        yield ErrorEvent(error=f"Max turns ({self.max_turns}) exceeded")
+        linked_view_tool = self.tool_registry.get("linked_view")
+        if linked_view_tool and full_response:
+            async for lv_event in self._auto_invoke_linked_view(
+                full_response, prompt, linked_view_tool
+            ):
+                yield lv_event
+        # ─────────────────────────────────────────────────────
+        yield AssistantTurnComplete(content=full_response)
+        self._messages.append(ConversationMessage(role="assistant", content=full_response))
+        #yield ErrorEvent(error=f"Max turns ({self.max_turns}) exceeded")
 
     def _build_api_messages(self) -> list[dict[str, Any]]:
         """Build messages for API call."""
@@ -308,7 +317,7 @@ class AgentEngine:
                             tool_name = event.name
                             tool_input = event.input or {}
 
-                await asyncio.wait_for(_stream(), timeout=60.0)
+                await asyncio.wait_for(_stream(), timeout=200.0)
                 break  # 成功则跳出重试循环
 
             except asyncio.TimeoutError:
@@ -320,9 +329,16 @@ class AgentEngine:
 
             except Exception as e:
                 err_msg = str(e)
-                # 连接中断错误：等待后重试
-                if "incomplete chunked read" in err_msg or "peer closed" in err_msg:
-                    print(f"[linked_view] 连接中断 (第{attempt+1}次): {err_msg}", flush=True)
+                # 连接中断错误：peer 断连、MiniMax 超时等，等待后重试
+                retryable = (
+                    "incomplete chunked read" in err_msg or
+                    "peer closed" in err_msg or
+                    "connection" in err_msg.lower() or
+                    "timeout" in err_msg.lower() or
+                    "read" in err_msg.lower()
+                )
+                if retryable:
+                    print(f"[linked_view] 连接异常 (第{attempt+1}次): {err_msg}", flush=True)
                     tool_name = ""
                     tool_input = {}
                     if attempt < MAX_RETRIES - 1:

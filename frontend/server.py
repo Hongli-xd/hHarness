@@ -4,6 +4,7 @@
 - 静态文件服务（地图资源、前端页面）
 - SSE 流式接口：GET /api/query?q=... → 实时推送终端事件
 - linked_view HTML 缓存接口：GET /api/view/latest
+- CDN 代理：GET /cdn/{lib} → 转发 Three.js / GSAP 请求（可选离线模式）
 """
 
 from __future__ import annotations
@@ -13,9 +14,9 @@ import json
 import os
 from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse, StreamingResponse, JSONResponse
+from fastapi.responses import HTMLResponse, StreamingResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 
 # ── 路径常量 ──────────────────────────────────────────────────
@@ -56,10 +57,47 @@ async def get_latest_view():
     """返回最新的联动视图 HTML。"""
     if not _latest_view_html:
         return HTMLResponse(
-            "<html><body style='font-family:serif;color:#888;padding:40px'>"
-            "尚无视图，请先发起一次查询。</body></html>"
+            "<html><body style='font-family:serif;color:#888;padding:40px;background:#030d18'>"
+            "<p style='color:#6090b0'>尚无视图，请先发起一次查询。</p></body></html>"
         )
     return HTMLResponse(_latest_view_html)
+
+
+# ── CDN 代理（可选，用于离线/内网环境） ───────────────────────
+# 将 Three.js、GSAP 等大文件缓存到本地，避免每次从 CDN 加载
+_cdn_cache: dict[str, bytes] = {}
+
+CDN_MAP = {
+    "three.min.js":  "https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js",
+    "gsap.min.js":   "https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js",
+}
+
+@app.get("/cdn/{lib_name}")
+async def proxy_cdn(lib_name: str):
+    """代理 CDN 资源，支持本地缓存。"""
+    # 优先从 resources/lib 目录找
+    local = RESOURCES_DIR / "lib" / lib_name
+    if local.exists():
+        content = local.read_bytes()
+        ct = "application/javascript"
+        return Response(content=content, media_type=ct)
+
+    # 内存缓存
+    if lib_name in _cdn_cache:
+        return Response(content=_cdn_cache[lib_name], media_type="application/javascript")
+
+    # 转发到 CDN
+    url = CDN_MAP.get(lib_name)
+    if not url:
+        return Response(status_code=404)
+    try:
+        import httpx
+        async with httpx.AsyncClient(timeout=30) as client:
+            r = await client.get(url)
+            _cdn_cache[lib_name] = r.content
+            return Response(content=r.content, media_type="application/javascript")
+    except Exception as e:
+        return Response(status_code=502, content=str(e))
 
 
 # ── SSE 流式查询接口 ───────────────────────────────────────────
@@ -72,7 +110,7 @@ async def query_stream(q: str):
       data: {"type": "text_delta",   "text": "..."}
       data: {"type": "tool_start",   "tool": "rag_query"}
       data: {"type": "tool_end",     "tool": "rag_query", "result": "..."}
-      data: {"type": "linked_view",  "url": "/api/view/latest"}
+      data: {"type": "linked_view",  "url": "/api/view/latest", "events": [...]}
       data: {"type": "turn_complete","content": "..."}
       data: {"type": "error",        "message": "..."}
       data: {"type": "done"}
@@ -91,11 +129,11 @@ async def query_stream(q: str):
                 ToolExecutionCompleted,
                 AssistantTurnComplete,
                 ErrorEvent,
-            )   
+            )
 
             runtime = create_historical_runtime(
                 model=os.environ.get("HISTRAG_MODEL", "claude-sonnet-4-20250514"),
-                max_turns=int(os.environ.get("HISTRAG_MAX_TURNS", "8")),
+                max_turns=int(os.environ.get("HISTRAG_MAX_TURNS", "5")),
             )
             await runtime.rag_client.initialize()
 
