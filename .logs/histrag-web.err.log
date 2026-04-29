@@ -1,0 +1,109 @@
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [68373]
+INFO:     Started server process [11484]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:7860 (Press CTRL+C to quit)
+INFO:nano-vectordb:Init {'embedding_dim': 1024, 'metric': 'cosine', 'storage_file': '/Users/lunatic-lazy/.histrag/rag_storage/vdb_entities.json'} 0 data
+INFO:nano-vectordb:Init {'embedding_dim': 1024, 'metric': 'cosine', 'storage_file': '/Users/lunatic-lazy/.histrag/rag_storage/vdb_relationships.json'} 0 data
+INFO:nano-vectordb:Init {'embedding_dim': 1024, 'metric': 'cosine', 'storage_file': '/Users/lunatic-lazy/.histrag/rag_storage/vdb_chunks.json'} 0 data
+INFO: [] Process 11484 KV load full_docs with 0 records
+INFO: [] Process 11484 KV load text_chunks with 0 records
+INFO: [] Process 11484 KV load full_entities with 0 records
+INFO: [] Process 11484 KV load full_relations with 0 records
+INFO: [] Process 11484 KV load entity_chunks with 0 records
+INFO: [] Process 11484 KV load relation_chunks with 0 records
+INFO: [base] Connected to neo4j at bolt://localhost:7687
+INFO: [base] Ensured B-Tree index on entity_id for base in neo4j
+INFO: [base] Found existing index 'entity_id_fulltext_idx_base' with state: ONLINE
+INFO: [base] Full-text index 'entity_id_fulltext_idx_base' already exists and is online. Skipping recreation.
+INFO: [] Process 11484 KV load llm_response_cache with 9 records
+INFO: [] Process 11484 doc status load doc_status with 0 records
+INFO: LLM func: 3 new workers initialized (Timeouts: Func: 900s, Worker: 1800s, Health Check: 1815s)
+INFO:  == LLM cache == saving: mix:keywords:d626142dc6425c54cbee75215386233f
+INFO: Embedding func: 8 new workers initialized (Timeouts: Func: 30s, Worker: 60s, Health Check: 75s)
+INFO: Query nodes: Li Shimin, Emperor Taizong, Emperor Gaozu, Xuanwu Gate, Tang Dynasty, Chang'an (top_k:60, cosine:0.2)
+INFO: Query edges: Xuanwu Gate Incident, Tang Dynasty coup, Chinese historical event, Palace coup (top_k:60, cosine:0.2)
+INFO: Naive query: 0 chunks (chunk_top_k:20 cosine:0.2)
+INFO: Raw search results: 0 entities, 0 relations, 0 vector chunks
+INFO: [kg_query] No query context could be built; returning no-result.
+INFO: Query nodes: Li Shimin, Emperor Taizong, Emperor Gaozu, Xuanwu Gate, Tang Dynasty, Chang'an (top_k:60, cosine:0.2)
+INFO: Query edges: Xuanwu Gate Incident, Tang Dynasty coup, Chinese historical event, Palace coup (top_k:60, cosine:0.2)
+INFO: Naive query: 0 chunks (chunk_top_k:20 cosine:0.2)
+INFO: Raw search results: 0 entities, 0 relations, 0 vector chunks
+INFO: [kg_query] No query context could be built; returning no-result.
+INFO: [aquery_data] Query returned no results.
+INFO: Successfully finalized 12 storages
+INFO:nano-vectordb:Init {'embedding_dim': 1024, 'metric': 'cosine', 'storage_file': '/Users/lunatic-lazy/.histrag/rag_storage/vdb_entities.json'} 0 data
+INFO:nano-vectordb:Init {'embedding_dim': 1024, 'metric': 'cosine', 'storage_file': '/Users/lunatic-lazy/.histrag/rag_storage/vdb_relationships.json'} 0 data
+INFO:nano-vectordb:Init {'embedding_dim': 1024, 'metric': 'cosine', 'storage_file': '/Users/lunatic-lazy/.histrag/rag_storage/vdb_chunks.json'} 0 data
+INFO: [base] Connected to neo4j at bolt://localhost:7687
+INFO: [base] Ensured B-Tree index on entity_id for base in neo4j
+INFO: [base] Found existing index 'entity_id_fulltext_idx_base' with state: ONLINE
+INFO: [base] Full-text index 'entity_id_fulltext_idx_base' already exists and is online. Skipping recreation.
+INFO: LLM func: 3 new workers initialized (Timeouts: Func: 900s, Worker: 1800s, Health Check: 1815s)
+INFO:  == LLM cache == saving: mix:keywords:4622829e1a7a0a4d5bc9cda96c143408
+INFO: Embedding func: 8 new workers initialized (Timeouts: Func: 30s, Worker: 60s, Health Check: 75s)
+INFO: Query nodes: Chang'an, An Lushan, Xuanzong Emperor, Tang military, Rebellion forces, Military strategy (top_k:60, cosine:0.2)
+INFO: Query edges: An Lushan Rebellion, Tang Dynasty, Fall of Chang'an, Historical military analysis (top_k:60, cosine:0.2)
+INFO: Naive query: 0 chunks (chunk_top_k:30 cosine:0.2)
+INFO: Raw search results: 0 entities, 0 relations, 0 vector chunks
+INFO: [kg_query] No query context could be built; returning no-result.
+INFO: Successfully finalized 12 storages
+INFO:nano-vectordb:Init {'embedding_dim': 1024, 'metric': 'cosine', 'storage_file': '/Users/lunatic-lazy/.histrag/rag_storage/vdb_entities.json'} 0 data
+INFO:nano-vectordb:Init {'embedding_dim': 1024, 'metric': 'cosine', 'storage_file': '/Users/lunatic-lazy/.histrag/rag_storage/vdb_relationships.json'} 0 data
+INFO:nano-vectordb:Init {'embedding_dim': 1024, 'metric': 'cosine', 'storage_file': '/Users/lunatic-lazy/.histrag/rag_storage/vdb_chunks.json'} 0 data
+INFO: [base] Connected to neo4j at bolt://localhost:7687
+INFO: [base] Ensured B-Tree index on entity_id for base in neo4j
+INFO: [base] Found existing index 'entity_id_fulltext_idx_base' with state: ONLINE
+INFO: [base] Full-text index 'entity_id_fulltext_idx_base' already exists and is online. Skipping recreation.
+INFO: LLM func: 3 new workers initialized (Timeouts: Func: 900s, Worker: 1800s, Health Check: 1815s)
+INFO:  == LLM cache == saving: mix:keywords:3927f8adc14cfdd6f91ff0a8399d180f
+INFO: Embedding func: 8 new workers initialized (Timeouts: Func: 30s, Worker: 60s, Health Check: 75s)
+INFO: Query nodes: Rebel forces, March routes, Military movements, An Lushan, Northern China (top_k:60, cosine:0.2)
+INFO: Query edges: An Lushan Rebellion, Tang Dynasty military history, Historical military campaigns (top_k:60, cosine:0.2)
+INFO: Naive query: 0 chunks (chunk_top_k:20 cosine:0.2)
+INFO: Raw search results: 0 entities, 0 relations, 0 vector chunks
+INFO: [kg_query] No query context could be built; returning no-result.
+INFO: Successfully finalized 12 storages
+INFO:nano-vectordb:Init {'embedding_dim': 1024, 'metric': 'cosine', 'storage_file': '/Users/lunatic-lazy/.histrag/rag_storage/vdb_entities.json'} 0 data
+INFO:nano-vectordb:Init {'embedding_dim': 1024, 'metric': 'cosine', 'storage_file': '/Users/lunatic-lazy/.histrag/rag_storage/vdb_relationships.json'} 0 data
+INFO:nano-vectordb:Init {'embedding_dim': 1024, 'metric': 'cosine', 'storage_file': '/Users/lunatic-lazy/.histrag/rag_storage/vdb_chunks.json'} 0 data
+INFO: [base] Connected to neo4j at bolt://localhost:7687
+INFO: [base] Ensured B-Tree index on entity_id for base in neo4j
+INFO: [base] Found existing index 'entity_id_fulltext_idx_base' with state: ONLINE
+INFO: [base] Full-text index 'entity_id_fulltext_idx_base' already exists and is online. Skipping recreation.
+INFO: LLM func: 3 new workers initialized (Timeouts: Func: 900s, Worker: 1800s, Health Check: 1815s)
+INFO:  == LLM cache == saving: mix:keywords:f115510faaeab8577510fb43dc07e22f
+INFO: Embedding func: 8 new workers initialized (Timeouts: Func: 30s, Worker: 60s, Health Check: 75s)
+INFO: Query nodes: Emperor Xianzong, 15th year of Yuanhe, Chang'an, Tang historical records, Political developments (top_k:60, cosine:0.2)
+INFO: Query edges: Tang Dynasty, Yuanhe era, Political events, Historical period, Chronological order (top_k:60, cosine:0.2)
+INFO: Naive query: 0 chunks (chunk_top_k:20 cosine:0.2)
+INFO: Raw search results: 0 entities, 0 relations, 0 vector chunks
+INFO: [kg_query] No query context could be built; returning no-result.
+INFO: Successfully finalized 12 storages
+INFO:nano-vectordb:Init {'embedding_dim': 1024, 'metric': 'cosine', 'storage_file': '/Users/lunatic-lazy/.histrag/rag_storage/vdb_entities.json'} 0 data
+INFO:nano-vectordb:Init {'embedding_dim': 1024, 'metric': 'cosine', 'storage_file': '/Users/lunatic-lazy/.histrag/rag_storage/vdb_relationships.json'} 0 data
+INFO:nano-vectordb:Init {'embedding_dim': 1024, 'metric': 'cosine', 'storage_file': '/Users/lunatic-lazy/.histrag/rag_storage/vdb_chunks.json'} 0 data
+INFO: [base] Connected to neo4j at bolt://localhost:7687
+INFO: [base] Ensured B-Tree index on entity_id for base in neo4j
+INFO: [base] Found existing index 'entity_id_fulltext_idx_base' with state: ONLINE
+INFO: [base] Full-text index 'entity_id_fulltext_idx_base' already exists and is online. Skipping recreation.
+INFO: LLM func: 3 new workers initialized (Timeouts: Func: 900s, Worker: 1800s, Health Check: 1815s)
+INFO:  == LLM cache == saving: mix:keywords:fa334f9e703e9021c10f605a0a7528fe
+INFO: Embedding func: 8 new workers initialized (Timeouts: Func: 30s, Worker: 60s, Health Check: 75s)
+INFO:openai._base_client:Retrying request to /embeddings in 0.474292 seconds
+INFO: Query nodes: Wu Zetian, Historical events, Time points, Locations, Empress Wu Zetian, Zhou Dynasty period (top_k:80, cosine:0.2)
+INFO: Query edges: Wu Zetian period, Major historical events, Timeline, Chinese history (top_k:80, cosine:0.2)
+INFO: Naive query: 0 chunks (chunk_top_k:20 cosine:0.2)
+INFO: Raw search results: 0 entities, 0 relations, 0 vector chunks
+INFO: [kg_query] No query context could be built; returning no-result.
+INFO: Query nodes: Wu Zetian, Historical events, Time points, Locations, Empress Wu Zetian, Zhou Dynasty period (top_k:100, cosine:0.2)
+INFO: Query edges: Wu Zetian period, Major historical events, Timeline, Chinese history (top_k:100, cosine:0.2)
+INFO: Naive query: 0 chunks (chunk_top_k:30 cosine:0.2)
+INFO: Raw search results: 0 entities, 0 relations, 0 vector chunks
+INFO: [kg_query] No query context could be built; returning no-result.
+INFO: [aquery_data] Query returned no results.
+INFO: Successfully finalized 12 storages

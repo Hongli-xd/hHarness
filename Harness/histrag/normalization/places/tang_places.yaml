@@ -1,0 +1,164 @@
+feature_types:
+  - id: ftype:capital
+    name_zh: 都城
+    name_en: capital
+    admin_level: central_place
+  - id: ftype:eastern-capital
+    name_zh: 东都
+    name_en: eastern capital
+    admin_level: central_place
+  - id: ftype:zhou
+    name_zh: 州
+    name_en: prefecture
+    admin_level: prefecture
+
+place_instances:
+  - id: hrg:tang:changan:618-904
+    sys_id: hrg_tang_changan_001
+    dynasty: 唐
+    data_source: HistRAG
+    data_source_ref: tang_places.yaml
+    feature_type_id: ftype:capital
+    default_spelling: 长安
+    begin_year: 618
+    begin_rule: dynastic_period
+    end_year: 904
+    end_rule: inferred_historical_change
+    object_type: POINT
+    xy_type: approximate_centroid
+    x_coord: "108.94"
+    y_coord: "34.26"
+  - id: hrg:han:changan:-202-23
+    sys_id: hrg_han_changan_001
+    dynasty: 汉
+    data_source: HistRAG
+    data_source_ref: tang_places.yaml
+    feature_type_id: ftype:capital
+    default_spelling: 长安
+    begin_year: -202
+    begin_rule: dynastic_period
+    end_year: 23
+    end_rule: inferred_historical_change
+    object_type: POINT
+    xy_type: approximate_centroid
+    x_coord: "108.86"
+    y_coord: "34.31"
+  - id: hrg:tang:luoyang:618-907
+    sys_id: hrg_tang_luoyang_001
+    dynasty: 唐
+    data_source: HistRAG
+    data_source_ref: tang_places.yaml
+    feature_type_id: ftype:eastern-capital
+    default_spelling: 洛阳
+    begin_year: 618
+    begin_rule: dynastic_period
+    end_year: 907
+    end_rule: dynastic_period
+    object_type: POINT
+    xy_type: approximate_centroid
+    x_coord: "112.45"
+    y_coord: "34.62"
+  - id: hrg:tang:yangzhou:618-907
+    sys_id: hrg_tang_yangzhou_001
+    dynasty: 唐
+    data_source: HistRAG
+    data_source_ref: tang_places.yaml
+    feature_type_id: ftype:zhou
+    default_spelling: 扬州
+    begin_year: 618
+    begin_rule: dynastic_period
+    end_year: 907
+    end_rule: dynastic_period
+    object_type: POINT
+    xy_type: approximate_centroid
+    x_coord: "119.42"
+    y_coord: "32.39"
+
+spellings:
+  - id: spelling:tang:changan:simp
+    place_instance_id: hrg:tang:changan:618-904
+    script: simplified_chinese
+    written_form: 长安
+    transcription_system: none
+    default_per_type: true
+    attested_by: 元和郡县图志
+  - id: spelling:tang:changan:alias-jingshi
+    place_instance_id: hrg:tang:changan:618-904
+    script: simplified_chinese
+    written_form: 京师
+    transcription_system: none
+    default_per_type: false
+  - id: spelling:han:changan:simp
+    place_instance_id: hrg:han:changan:-202-23
+    script: simplified_chinese
+    written_form: 长安
+    transcription_system: none
+    default_per_type: true
+  - id: spelling:tang:luoyang:simp
+    place_instance_id: hrg:tang:luoyang:618-907
+    script: simplified_chinese
+    written_form: 洛阳
+    transcription_system: none
+    default_per_type: true
+  - id: spelling:tang:luoyang:trad
+    place_instance_id: hrg:tang:luoyang:618-907
+    script: traditional_chinese
+    written_form: 洛陽
+    transcription_system: none
+    default_per_type: true
+  - id: spelling:tang:luoyang:dongdu
+    place_instance_id: hrg:tang:luoyang:618-907
+    script: simplified_chinese
+    written_form: 东都
+    transcription_system: none
+    default_per_type: false
+  - id: spelling:tang:yangzhou:simp
+    place_instance_id: hrg:tang:yangzhou:618-907
+    script: simplified_chinese
+    written_form: 扬州
+    transcription_system: none
+    default_per_type: true
+  - id: spelling:tang:yangzhou:trad
+    place_instance_id: hrg:tang:yangzhou:618-907
+    script: traditional_chinese
+    written_form: 揚州
+    transcription_system: none
+    default_per_type: true
+
+present_locations:
+  - id: presloc:tang:changan:xian
+    place_instance_id: hrg:tang:changan:618-904
+    type: location
+    country_code: CN
+    text_value: 陕西省西安市
+    source: modern_reference
+    longitude: "108.94"
+    latitude: "34.26"
+    note: 现代近似点，不代表唐长安城精确边界。
+  - id: presloc:han:changan:xian
+    place_instance_id: hrg:han:changan:-202-23
+    type: location
+    country_code: CN
+    text_value: 陕西省西安市未央区附近
+    source: modern_reference
+    longitude: "108.86"
+    latitude: "34.31"
+    note: 现代近似点，不代表汉长安城精确边界。
+  - id: presloc:tang:luoyang:luoyang
+    place_instance_id: hrg:tang:luoyang:618-907
+    type: location
+    country_code: CN
+    text_value: 河南省洛阳市
+    source: modern_reference
+    longitude: "112.45"
+    latitude: "34.62"
+    note: 现代近似点，不代表唐代洛阳城精确边界。
+  - id: presloc:tang:yangzhou:yangzhou
+    place_instance_id: hrg:tang:yangzhou:618-907
+    type: location
+    country_code: CN
+    text_value: 江苏省扬州市
+    source: modern_reference
+    longitude: "119.42"
+    latitude: "32.39"
+    note: 现代近似点，不代表唐代扬州城精确边界。

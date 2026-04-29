@@ -66,6 +66,36 @@ registry = load_historical_skill_registry(cwd=".")
 
 ## Usage
 
+### Stable Web Startup
+
+From the repository root, run:
+
+```bash
+./scripts/start_histrag_web.sh
+```
+
+The script checks the virtual environment, installs missing Python dependencies,
+verifies local map resources, starts Neo4j when available through Homebrew, and
+restarts the HistRAG web service at:
+
+```text
+http://127.0.0.1:7860
+```
+
+Neo4j Browser is available at:
+
+```text
+http://127.0.0.1:7474
+username: neo4j
+password: 00000000
+```
+
+To stop the web service:
+
+```bash
+launchctl bootout gui/$(id -u) ~/Library/LaunchAgents/histrag.web.plist
+```
+
 ### Installation
 
 ```bash

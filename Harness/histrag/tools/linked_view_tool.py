@@ -1,7 +1,7 @@
 """Linked View Tool - 历史地名地图联动视图工具。
 
 每次 RAG 回答结束后自动调用，从答案文本中提取
-时间事件和历史地名，生成可嵌入父窗口的 Cesium 地图 HTML。
+时间事件和历史地名，生成可嵌入父窗口的本地地图 HTML。
 父窗口时间轴选中事件 → 地图高亮关联地名；
 点击地图地名 → 通知父窗口跳转到关联事件。
 """
@@ -13,7 +13,9 @@ import json
 from typing import Any
 
 from pydantic import BaseModel, Field, field_validator
+
 from ..agent import BaseTool, ToolExecutionContext, ToolResult
+from ..normalization import normalize_linked_view_payload
 
 
 class LinkedEvent(BaseModel):
@@ -64,14 +66,16 @@ class LinkedPlace(BaseModel):
     model_config = {'extra': 'allow'}
 
     name: str = Field(description="地名")
-    longitude: float = Field(description="经度")
-    latitude: float = Field(description="纬度")
+    longitude: float | None = Field(default=None, description="经度")
+    latitude: float | None = Field(default=None, description="纬度")
     place_type: str = Field(default="hist", description="cap/prov/hist/pass/battle/port/region")
     info: str = Field(default="", description="地名描述")
 
     @field_validator('longitude')
     @classmethod
     def validate_longitude(cls, v):
+        if v is None:
+            return v
         if not -180 <= v <= 180:
             raise ValueError("longitude must be between -180 and 180")
         return v
@@ -79,6 +83,8 @@ class LinkedPlace(BaseModel):
     @field_validator('latitude')
     @classmethod
     def validate_latitude(cls, v):
+        if v is None:
+            return v
         if not -90 <= v <= 90:
             raise ValueError("latitude must be between -90 and 90")
         return v
@@ -171,7 +177,8 @@ class LinkedViewTool(BaseTool):
         if not arguments.events and not arguments.places:
             return ToolResult(output="No events or places provided.", is_error=True)
 
-        warnings = self._collect_warnings(arguments)
+        arguments, normalization_warnings = self._normalize_arguments(arguments, context)
+        warnings = normalization_warnings + self._collect_warnings(arguments)
         html = self._generate_html(arguments)
 
         summary = (
@@ -201,6 +208,23 @@ class LinkedViewTool(BaseTool):
             },
         )
 
+    def _normalize_arguments(
+        self,
+        arguments: LinkedViewInput,
+        context: ToolExecutionContext,
+    ) -> tuple[LinkedViewInput, list[str]]:
+        events, places, warnings = normalize_linked_view_payload(
+            [event.model_dump() for event in arguments.events],
+            [place.model_dump() for place in arguments.places],
+            dynasty_hint=context.metadata.get("dynasty_hint"),
+        )
+        payload = {
+            "title": arguments.title,
+            "events": events,
+            "places": places,
+        }
+        return LinkedViewInput.model_validate(payload), warnings
+
     # ── HTML 生成 ──────────────────────────────────────────────
 
     def _collect_warnings(self, args: LinkedViewInput) -> list[str]:
@@ -228,22 +252,26 @@ class LinkedViewTool(BaseTool):
 
         return warnings
 
-    def _generate_html(self, args: LinkedViewInput) -> str:
+    def _generate_local_map_html(self, args: LinkedViewInput) -> str:
         def dump_js(value: Any) -> str:
             return json.dumps(value, ensure_ascii=False).replace("</", "<\\/")
 
-        events_js = dump_js(
-            [
+        normalized_events = []
+        for e in args.events:
+            year = e.year
+            if year < 0 and abs(year) >= 500:
+                year = abs(year)
+            normalized_events.append(
                 {
-                    "y": e.year,
+                    "y": year,
                     "title": e.title,
                     "desc": e.description,
                     "cat": e.category,
                     "places": e.place_names,
                 }
-                for e in args.events
-            ],
-        )
+            )
+
+        events_js = dump_js(normalized_events)
 
         places_js = dump_js(
             [
@@ -258,7 +286,7 @@ class LinkedViewTool(BaseTool):
             ],
         )
 
-        years = [e.year for e in args.events] if args.events else [0]
+        years = [event["y"] for event in normalized_events] if normalized_events else [0]
         y_min = min(years)
         y_max = max(years)
         pad = max(20, (y_max - y_min) // 10)
@@ -273,7 +301,6 @@ class LinkedViewTool(BaseTool):
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{title}</title>
-<link rel="stylesheet" href="https://cesium.com/downloads/cesiumjs/releases/1.118/Build/Cesium/Widgets/widgets.css">
 <style>
 * {{ box-sizing: border-box; margin: 0; padding: 0; }}
 body {{ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -300,10 +327,21 @@ body {{ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 /* ── 地图区 ── */
 #map-panel {{
   flex: 1; position: relative; overflow: hidden;
+  background: radial-gradient(circle at 50% 45%, #f8f2e5 0, #eee5d1 58%, #d8ccb0 100%);
 }}
-#cesiumContainer {{ width: 100%; height: 100%; }}
-.cesium-widget-credits,
-.cesium-viewer-bottom {{ display: none !important; }}
+#map-svg {{ width: 100%; height: 100%; display: block; }}
+.graticule {{ fill: none; stroke: rgba(128, 103, 68, .24); stroke-width: .6; }}
+.country {{ fill: #e6dcc5; stroke: #aa9876; stroke-width: .55; vector-effect: non-scaling-stroke; }}
+.place circle {{
+  stroke: #fffaf0; stroke-width: 1.6; paint-order: stroke; cursor: pointer;
+  filter: drop-shadow(0 1px 2px rgba(55, 36, 14, .25));
+}}
+.place text {{
+  font-size: 11px; fill: #2d261b; stroke: rgba(255,250,240,.9); stroke-width: 3px;
+  paint-order: stroke; pointer-events: none; font-weight: 600;
+}}
+.place.is-highlighted circle {{ stroke: #3b1b10; stroke-width: 2.2; }}
+.place.is-highlighted text {{ font-size: 13px; fill: #2c1710; font-weight: 800; }}
 #map-tooltip {{
   position: absolute; pointer-events: none; display: none;
   background: rgba(255,255,255,0.96); border: 1px solid #ccc;
@@ -331,12 +369,14 @@ body {{ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 </div>
 
 <div id="map-panel">
-  <div id="cesiumContainer"></div>
+  <svg id="map-svg" role="img" aria-label="历史地名地图"></svg>
   <div id="map-tooltip"></div>
 </div>
 
-<script src="https://cesium.com/downloads/cesiumjs/releases/1.118/Build/Cesium/Cesium.js"
-  onerror="document.getElementById('map-panel').innerHTML='<div class=&quot;map-error&quot;>地图资源加载失败：Cesium CDN 不可用。请检查网络，或改用本地 Cesium 静态资源。</div>'"></script>
+<script src="/resources/lib/d3.min.js"
+  onerror="document.getElementById('map-panel').innerHTML='<div class=&quot;map-error&quot;>地图资源加载失败：/resources/lib/d3.min.js 不可用。</div>'"></script>
+<script src="/resources/lib/topojson.min.js"
+  onerror="document.getElementById('map-panel').innerHTML='<div class=&quot;map-error&quot;>地图资源加载失败：/resources/lib/topojson.min.js 不可用。</div>'"></script>
 <script>
 // ── 数据 ────────────────────────────────────────────────────
 const EVENTS = {events_js};
@@ -351,139 +391,34 @@ const CAT = {{
   nat: {{ color:'#993C1D', label:'灾异' }},
 }};
 
-// 地名类型 → Cesium 颜色
 function placeColor(type, hl) {{
-  if (hl) return Cesium.Color.fromCssColorString('#e05000');
-  const m = {{ cap:'#cc3300', prov:'#223388', battle:'#8b0000' }};
-  return Cesium.Color.fromCssColorString(m[type] || '#667755');
+  if (hl) return '#e05000';
+  const m = {{ cap:'#b7311f', prov:'#2f4b9a', battle:'#8b1e1e', pass:'#7b4f1e', port:'#0f6e78', region:'#566b35' }};
+  return m[type] || '#667755';
 }}
 
 // ── 状态 ────────────────────────────────────────────────────
 let shownCats = new Set(['mil','pol','eco','nat']);
 let selIdx = -1;
 let highlighted = new Set();
+let countriesData = null;
+let projection = null;
+let mapLayer = null;
+let placeLayer = null;
 const TRUSTED_ORIGIN = window.location.origin;
 
 function postToParent(payload) {{
   window.parent.postMessage(payload, TRUSTED_ORIGIN);
 }}
 
-// ── Cesium 初始化 ────────────────────────────────────────────
-const viewer = new Cesium.Viewer('cesiumContainer', {{
-  baseLayerPicker: false,
-  animation: false,
-  fullscreenButton: false,
-  geocoder: false,
-  homeButton: false,
-  infoBox: false,
-  sceneModePicker: false,
-  selectionIndicator: false,
-  timeline: false,
-  navigationHelpButton: false,
-  navigationInstructionsInitiallyVisible: false,
-}});
-
-// 临时在线地形 fallback：ArcGIS Online 不稳定，后续应替换为本地 DEM terrain provider。
-try {{
-  const terrainProvider = new Cesium.ArcGISTiledElevationTerrainProvider({{
-    url: 'https://elevation3d.arcgisonline.com/arcgis/rest/services/WorldElevation3D/Terrain3D/ImageServer',
-  }});
-  viewer.scene.terrainProvider = terrainProvider;
-}} catch(e) {{
-  console.warn('地形加载失败，继续使用默认椭球地形:', e);
-}}
-
-// 防止渲染错误导致崩溃
-viewer.scene.maximumRenderTimeChange = Infinity;
-viewer.scene.requestRenderMode = false;
-
-// 叠加国界线（容错处理）
-try {{
-  viewer.dataSources.add(Cesium.GeoJsonDataSource.load(
-    'https://raw.githubusercontent.com/datasets/geo-countries/master/data/countries.geojson',
-    {{ stroke: Cesium.Color.fromCssColorString('#8b7355'), fill: Cesium.Color.TRANSPARENT, strokeWidth: 1 }}
-  ));
-}} catch(e) {{ console.warn('国界线加载失败:', e); }}
-
-// 叠加中国省界（简化多边形，减少顶点数避免崩溃）
-try {{
-  Promise.all([
-    Cesium.GeoJsonDataSource.load(
-      'https://geo.datav.aliyun.com/areas_v3/bound/100000_full.json',
-      {{ stroke: Cesium.Color.fromCssColorString('#c0392b'), fill: Cesium.Color.TRANSPARENT, strokeWidth: 0.5 }}
-    )
-  ]).then(results => {{
-    const ds = results[0];
-    // 简化每个省的 polygon，顶点数超过阈值就跳过
-    ds.entities.values.forEach(entity => {{
-      if (entity.polygon && entity.polygon.hierarchy) {{
-        try {{
-          const hierarchy = entity.polygon.hierarchy.getValue();
-          if (hierarchy && hierarchy.positions && hierarchy.positions.length > 200) {{
-            // 顶点过多，跳过此省
-            entity.show = false;
-          }}
-        }} catch(e) {{}}
-      }}
-    }});
-    viewer.dataSources.add(ds);
-  }}).catch(e => {{ console.warn('省界加载失败:', e); }});
-}} catch(e) {{ console.warn('省界初始化失败:', e); }}
-
-// 初始视角：聚焦中国
-viewer.camera.setView({{
-  destination: Cesium.Cartesian3.fromDegrees(105, 35, 4500000),
-  orientation: {{ heading: 0, pitch: -Cesium.Math.PI_OVER_TWO, roll: 0 }}
-}});
-
-// ── 地名标注 ────────────────────────────────────────────────
-const placeEntities = {{}};
 function isValidPlace(p) {{
   return p && Number.isFinite(p.lo) && Number.isFinite(p.la)
     && p.lo >= -180 && p.lo <= 180 && p.la >= -90 && p.la <= 90;
 }}
 
-PLACES.forEach(p => {{
-  if (!isValidPlace(p)) {{
-    console.warn('跳过无效地名坐标:', p);
-    return;
-  }}
-  const isHL = highlighted.has(p.n);
-  const color = placeColor(p.t, isHL);
-  const pinSize = p.t === 'cap' ? 12 : p.t === 'prov' ? 9 : 7;
-  const entity = viewer.entities.add({{
-    name: p.n,
-    position: Cesium.Cartesian3.fromDegrees(p.lo, p.la, 0),
-    point: {{
-      pixelSize: pinSize,
-      color: color,
-      outlineColor: Cesium.Color.WHITE,
-      outlineWidth: 1.5,
-      heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
-      disableDepthTestDistance: Number.POSITIVE_INFINITY,
-    }},
-    label: {{
-      text: p.n,
-      font: p.t === 'cap' ? 'bold 13px sans-serif' : '11px sans-serif',
-      fillColor: color,
-      outlineColor: Cesium.Color.WHITE,
-      outlineWidth: 3,
-      style: Cesium.LabelStyle.FILL_AND_OUTLINE,
-      pixelOffset: new Cesium.Cartesian2(8, 0),
-      verticalOrigin: Cesium.VerticalOrigin.CENTER,
-      horizontalOrigin: Cesium.HorizontalOrigin.LEFT,
-      heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
-      disableDepthTestDistance: Number.POSITIVE_INFINITY,
-    }},
-    _placeData: p,
-  }});
-  if (!placeEntities[p.n]) placeEntities[p.n] = [];
-  placeEntities[p.n].push(entity);
-}});
-
-// ── 点击地名 → 时间轴联动 ──────────────────────────────────
-const handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
 const tooltip = document.getElementById('map-tooltip');
+const mapPanel = document.getElementById('map-panel');
+const svg = d3.select('#map-svg');
 
 function setTooltipContent(place) {{
   tooltip.replaceChildren();
@@ -493,51 +428,95 @@ function setTooltipContent(place) {{
   if (place.i) tooltip.appendChild(document.createTextNode(place.i));
 }}
 
-handler.setInputAction(movement => {{
-  const picked = viewer.scene.pick(movement.position);
-  if (Cesium.defined(picked) && Cesium.defined(picked.id) && picked.id._placeData) {{
-    const p = picked.id._placeData;
-    onPlaceClick(p.n);
-  }}
-}}, Cesium.ScreenSpaceEventType.LEFT_CLICK);
+function mapDimensions() {{
+  return {{
+    width: Math.max(320, mapPanel.clientWidth || 640),
+    height: Math.max(240, mapPanel.clientHeight || 420),
+  }};
+}}
 
-handler.setInputAction(movement => {{
-  const picked = viewer.scene.pick(movement.endPosition);
-  if (Cesium.defined(picked) && Cesium.defined(picked.id) && picked.id._placeData) {{
-    const p = picked.id._placeData;
-    tooltip.style.display = 'block';
-    setTooltipContent(p);
-    tooltip.style.left = (movement.endPosition.x + 14) + 'px';
-    tooltip.style.top  = (movement.endPosition.y - 40) + 'px';
-  }} else {{
-    tooltip.style.display = 'none';
-  }}
-}}, Cesium.ScreenSpaceEventType.MOUSE_MOVE);
+function renderMap() {{
+  if (!countriesData) return;
+  const dims = mapDimensions();
+  const width = dims.width;
+  const height = dims.height;
+  svg.attr('viewBox', `0 0 ${{width}} ${{height}}`);
+  svg.selectAll('*').remove();
+
+  projection = d3.geoMercator()
+    .center([105, 35])
+    .scale(Math.min(width * 1.05, height * 2.05))
+    .translate([width / 2, height / 2]);
+  const path = d3.geoPath(projection);
+  const graticule = d3.geoGraticule10();
+
+  mapLayer = svg.append('g').attr('class', 'map-layer');
+  mapLayer.append('path').datum(graticule).attr('class', 'graticule').attr('d', path);
+  mapLayer.selectAll('path.country')
+    .data(countriesData.features)
+    .join('path')
+    .attr('class', 'country')
+    .attr('d', path);
+
+  placeLayer = mapLayer.append('g').attr('class', 'place-layer');
+  drawPlaces();
+}}
+
+function drawPlaces() {{
+  if (!placeLayer || !projection) return;
+  const visiblePlaces = PLACES
+    .filter(isValidPlace)
+    .map(p => ({{ ...p, xy: projection([p.lo, p.la]) }}))
+    .filter(p => Array.isArray(p.xy) && Number.isFinite(p.xy[0]) && Number.isFinite(p.xy[1]));
+
+  const nodes = placeLayer.selectAll('g.place')
+    .data(visiblePlaces, p => p.n)
+    .join(enter => {{
+      const g = enter.append('g')
+        .attr('class', 'place')
+        .style('cursor', 'pointer')
+        .on('click', (_event, p) => onPlaceClick(p.n))
+        .on('mousemove', (event, p) => {{
+          tooltip.style.display = 'block';
+          setTooltipContent(p);
+          tooltip.style.left = (event.offsetX + 14) + 'px';
+          tooltip.style.top = (event.offsetY - 36) + 'px';
+        }})
+        .on('mouseleave', () => {{
+          tooltip.style.display = 'none';
+        }});
+      g.append('circle');
+      g.append('text').attr('dx', 9).attr('dy', 4);
+      return g;
+    }});
+
+  nodes
+    .attr('transform', p => `translate(${{p.xy[0]}},${{p.xy[1]}})`)
+    .classed('is-highlighted', p => highlighted.has(p.n));
+
+  nodes.select('circle')
+    .attr('r', p => highlighted.has(p.n) ? 7 : (p.t === 'cap' ? 5.8 : p.t === 'prov' ? 5 : 4.2))
+    .attr('fill', p => placeColor(p.t, highlighted.has(p.n)));
+
+  nodes.select('text').text(p => p.n);
+}}
 
 // ── 高亮地名 ───────────────────────────────────────────────
 function setHighlightedPlaces(names) {{
   highlighted = new Set(names);
-  PLACES.forEach(p => {{
-    const entities = placeEntities[p.n] || [];
-    const hl = highlighted.has(p.n);
-    const color = placeColor(p.t, hl);
-    entities.forEach(ent => {{
-      ent.point.color = color;
-      ent.point.pixelSize = hl ? 14 : (p.t==='cap' ? 12 : p.t==='prov' ? 9 : 7);
-      ent.label.fillColor = color;
-      ent.label.font = hl ? 'bold 14px sans-serif' : (p.t==='cap' ? 'bold 13px sans-serif' : '11px sans-serif');
-    }});
-  }});
+  drawPlaces();
 }}
 
-// ── 飞到地名 ────────────────────────────────────────────────
 function focusPlace(name) {{
   const p = PLACES.find(p => p.n === name && isValidPlace(p));
-  if (!p) return;
-  viewer.camera.flyTo({{
-    destination: Cesium.Cartesian3.fromDegrees(p.lo, p.la, 800000),
-    duration: 1.2,
-  }});
+  if (!p || !projection || !mapLayer) return;
+  const xy = projection([p.lo, p.la]);
+  if (!Array.isArray(xy)) return;
+  const dims = mapDimensions();
+  const zoom = 1.85;
+  const tx = dims.width / 2 - xy[0] * zoom;
+  const ty = dims.height / 2 - xy[1] * zoom;
+  mapLayer.transition().duration(520).attr('transform', `translate(${{tx}},${{ty}}) scale(${{zoom}})`);
 }}
 
 // ── 点击地名 → 查找关联事件 ─────────────────────────────────
@@ -590,6 +569,33 @@ window.addEventListener('message', e => {{
     pickEvent(data.index);
   }}
 }});
+
+function showMapError(message) {{
+  mapPanel.innerHTML = `<div class="map-error">${{message}}</div>`;
+}}
+
+async function initMap() {{
+  try {{
+    if (!window.d3 || !window.topojson) {{
+      throw new Error('本地 D3/topojson 资源未加载');
+    }}
+    const world = await d3.json('/resources/data/countries-110m.json');
+    if (!world || !world.objects || !world.objects.countries) {{
+      throw new Error('countries-110m.json 格式不正确');
+    }}
+    countriesData = topojson.feature(world, world.objects.countries);
+    renderMap();
+    window.addEventListener('resize', () => renderMap());
+  }} catch (err) {{
+    console.error(err);
+    showMapError(`地图资源加载失败：${{err.message || err}}`);
+  }}
+}}
+
+initMap();
 </script>
 </body>
 </html>"""
+
+    def _generate_html(self, args: LinkedViewInput) -> str:
+        return self._generate_local_map_html(args)

@@ -23,9 +23,17 @@ classifiers = [
 ]
 
 dependencies = [
+    "anthropic>=0.18,<1.0",
+    "fastapi>=0.110",
+    "lightrag-hku @ file:///Users/lunatic-lazy/vs%20code%20projects/hHarness/LightRAG",
+    "neo4j>=5,<7",
+    "openai>=2,<3",
     "pydantic>=2",
-    "openharness-ai @ file:///home/selom/project/hHarness/OpenHarness",
-    "lightrag-hku @ file:///home/selom/project/hHarness/LightRAG",
+    "PyYAML>=6",
+    "rich>=13",
+    "typer>=0.12",
+    "uvicorn>=0.29",
+    "voyageai>=0.3,<1.0",
 ]
 
 [project.optional-dependencies]

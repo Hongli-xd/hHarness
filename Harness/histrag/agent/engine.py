@@ -285,7 +285,8 @@ class AgentEngine:
             "- events：回答中提到年份的历史事件，每个事件绑定相关地名\n"
             "- places：回答中出现的历史地名，附经纬度（现代坐标，精度0.1度）\n"
             "- place_names 必须与 places 的 name 完全一致\n"
-            "- title：问题的10字以内概括"
+            "- title：问题的10字以内概括\n"
+            "- 唐宋元明清等中国中古/近世事件年份必须使用公元后正数，不要把普通年份写成负数"
         )
 
         tools = self.tool_registry.to_api_schema()
@@ -305,7 +306,7 @@ class AgentEngine:
 
         # ── 超时保护：失败静默返回不影响主流程 ──
         # linked_view 是附加视图，不能让最终答案后处理长时间阻塞。
-        EXTRACTION_TIMEOUT_SECONDS = 25.0
+        EXTRACTION_TIMEOUT_SECONDS = 120.0
         MAX_RETRIES = 2
         for attempt in range(MAX_RETRIES):
             try:

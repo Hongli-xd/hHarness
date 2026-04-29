@@ -1,0 +1,17 @@
+source: HistoryChronology
+dynasty: 东汉
+reigns:
+  - id: reign:eastern-han:zhangdi:yuanhe
+    dynasty: 东汉
+    polity: 东汉
+    emperor: 汉章帝
+    emperor_name: 刘炟
+    reign_title: 元和
+    start_year: 84
+    end_year: 87
+    mapping:
+      1: 84
+      2: 85
+      3: 86
+      4: 87
+    source: HistoryChronology
